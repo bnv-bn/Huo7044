@@ -1,0 +1,87 @@
+-- [[ The Battle Cats: Ultimate Mega Script 2026 ]] --
+
+function Main()
+    local menu = gg.choice({
+        "💎 [Resource] เสก Cat Food & XP (999k)",
+        "🔓 [Unlock] ปลดล็อกด่าน & สมบัติทอง",
+        "💀 [Enemy] ศัตรูเลือด 1 HP (One-Hit Kill)",
+        "🐌 [Enemy] ศัตรูเดินอืด + ตีเบาเป็น 0",
+        "⚡ [Player] ปล่อยตัวรัวๆ (No Cooldown)",
+        "⚔️ [Player] แมวเราตีแรง + เลือดเยอะ",
+        "❌ [Exit] ปิดเมนูสคริปต์"
+    }, nil, "--- TBC All-in-One Menu ---")
+
+    if menu == 1 then ResourceHack() end
+    if menu == 2 then UnlockHack() end
+    if menu == 3 then EnemyHPHack() end
+    if menu == 4 then EnemyDebuff() end
+    if menu == 5 then CooldownHack() end
+    if menu == 6 then PlayerBuff() end
+    if menu == 7 or menu == nil then os.exit() end
+end
+
+-- 1. [Resource] เสกเงินและ XP
+function ResourceHack()
+    gg.toast("💎 กำลังเสกทรัพยากร...")
+    gg.searchNumber("5000~10000", gg.TYPE_DWORD)
+    gg.getResults(100)
+    gg.editAll("999999", gg.TYPE_DWORD)
+    gg.toast("✅ เสกเสร็จแล้ว!")
+end
+
+-- 2. [Unlock] ปลดล็อกทุกอย่าง
+function UnlockHack()
+    gg.toast("🔓 กำลังปลดล็อกสมบัติทอง...")
+    gg.searchNumber("0~299", gg.TYPE_DWORD)
+    gg.getResults(100)
+    gg.editAll("300", gg.TYPE_DWORD)
+    gg.toast("✅ สมบัติทองครบทุกชิ้น!")
+end
+
+-- 3. [Enemy] ศัตรูเลือด 1 HP (เด็ดที่สุด!)
+function EnemyHPHack()
+    gg.clearResults()
+    gg.setRanges(gg.REGION_ANONYMOUS)
+    gg.toast("🔍 รอศัตรูออกมาจากฐานแล้วกด...")
+    -- ค้นหาค่า HP ศัตรู (มักจะเป็น Float หรือ Dword ช่วงกว้าง)
+    gg.searchNumber("500~5000000", gg.TYPE_FLOAT)
+    gg.getResults(500)
+    gg.editAll("1", gg.TYPE_FLOAT)
+    gg.toast("💀 ศัตรูทุกตัวในฉากเหลือ 1 HP!")
+end
+
+-- 4. [Enemy] ศัตรูเดินช้า + ตี 0
+function EnemyDebuff()
+    gg.clearResults()
+    gg.setRanges(gg.REGION_ANONYMOUS)
+    -- ลด Speed ศัตรูเหลือ 0.1 และ ATK เหลือ 0
+    gg.searchNumber("1.0~50.0", gg.TYPE_FLOAT)
+    gg.getResults(200)
+    gg.editAll("0", gg.TYPE_FLOAT)
+    gg.toast("🐌 ศัตรูเป็นอัมพาตและตีไม่เข้า!")
+end
+
+-- 5. [Player] ปล่อยตัวรัวๆ
+function CooldownHack()
+    gg.searchNumber("0.5~100.0", gg.TYPE_FLOAT)
+    gg.getResults(500)
+    gg.editAll("0", gg.TYPE_FLOAT)
+    gg.toast("⚡ ปล่อยแมวได้ไม่จำกัด!")
+end
+
+-- 6. [Player] เสกแมวเราให้โหด
+function PlayerBuff()
+    gg.searchNumber("100~5000", gg.TYPE_FLOAT)
+    gg.getResults(100)
+    gg.editAll("999999", gg.TYPE_FLOAT)
+    gg.toast("⚔️ แมวของคุณกลายเป็นเทพ!")
+end
+
+-- --- Main Loop ---
+while true do
+    if gg.isVisible(true) then
+        gg.setVisible(false)
+        Main()
+    end
+    gg.sleep(100)
+end
