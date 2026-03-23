@@ -74,6 +74,44 @@
             border-radius: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
             border-left: 8px solid #b21f1f;
+            margin-bottom: 30px;
+        }
+
+        /* --- Comment Section --- */
+        .comment-section {
+            padding: 40px 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-family: 'Kanit';
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: #1a2a6c;
+        }
+
+        .submit-btn {
+            background: #1a2a6c;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: #b21f1f;
         }
 
         /* --- Music Section --- */
@@ -103,11 +141,6 @@
             border-radius: 50px;
             font-weight: 600;
             transition: 0.3s;
-        }
-
-        .march-btn:hover {
-            transform: scale(1.05);
-            background-color: white;
         }
 
         /* --- Team Section --- */
@@ -227,7 +260,18 @@
             <div class="member-card"><div class="member-name">ศุภณัฏฐ แก้วโพคา</div><div class="member-role">คณะกรรมการ</div></div>
             <div class="member-card"><div class="member-name">ภาคิน แสนจัน</div><div class="member-role">คณะกรรมการ</div></div>
             <div class="member-card"><div class="member-name">ธิดาพร วันเพ็ชร</div><div class="member-role">คณะกรรมการ</div></div>
+        </div>
+    </section>
 
+    <section class="comment-section">
+        <div class="content-card" style="border-left: 8px solid #fdbb2d;">
+            <h3 style="color:#1a2a6c; margin-bottom:15px;">💬 ส่งความคิดเห็นถึงสภานักเรียน</h3>
+            <form id="discordForm" class="form-group">
+                <input type="text" id="senderName" placeholder="ชื่อของคุณ" required>
+                <textarea id="senderMsg" rows="4" placeholder="พิมพ์ข้อความที่นี่..." required style="resize: none;"></textarea>
+                <button type="submit" id="submitBtn" class="submit-btn">ส่งข้อความเข้า Discord</button>
+            </form>
+            <p id="statusMsg" style="margin-top: 10px; text-align: center; font-size: 0.9rem; display: none;"></p>
         </div>
     </section>
 
@@ -236,6 +280,61 @@
         <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 10px;">Created by Student Council Team</p>
     </footer>
 
+    <script>
+        document.getElementById('discordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // อย่าลืมวาง URL ของ Webhook ที่นี่อีกครั้งนะครับ
+            const webhookURL = "https://discord.com/api/webhooks/1485616498033692836/N60AQBtnrXNlI1-pSeiHLxBKN7wPzt3Xj3BIlHC5c-pg5CZ75gcL-DEWGDGyVMwHL-kF"; 
+
+            const name = document.getElementById('senderName').value;
+            const message = document.getElementById('senderMsg').value;
+            const btn = document.getElementById('submitBtn');
+            const status = document.getElementById('statusMsg');
+
+            btn.disabled = true;
+            btn.innerText = "กำลังส่ง...";
+
+            const data = {
+                username: "ระบบแจ้งเตือนสภานักเรียน",
+                embeds: [{
+                    title: "📌 มีความคิดเห็นใหม่จากเว็บไซต์",
+                    color: 16759597,
+                    fields: [
+                        { name: "👤 ผู้ส่ง", value: name, inline: true },
+                        { name: "💬 ข้อความ", value: message }
+                    ],
+                    footer: { text: "ส่งจากเว็บไซต์สภานักเรียนบ้านทุ่มทุ่มฯ" },
+                    timestamp: new Date()
+                }]
+            };
+
+            fetch(webhookURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (response.ok) {
+                    status.style.display = "block";
+                    status.style.color = "green";
+                    status.innerText = "✅ ส่งความคิดเห็นเรียบร้อยแล้ว!";
+                    document.getElementById('discordForm').reset();
+                } else {
+                    throw new Error();
+                }
+            })
+            .catch(err => {
+                status.style.display = "block";
+                status.style.color = "red";
+                status.innerText = "❌ เกิดข้อผิดพลาด กรุณาลองใหม่";
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerText = "ส่งข้อความเข้า Discord";
+                setTimeout(() => { status.style.display = "none"; }, 5000);
+            });
+        });
+    </script>
 </body>
-          </html>
-  
+</html>
