@@ -1,240 +1,73 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สภานักเรียน | โรงเรียนบ้านทุ่มทุ่มประชานุเคราะห์</title>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Kanit', sans-serif;
-        }
+<section class="comment-section" style="padding: 40px 20px; max-width: 900px; margin: 0 auto;">
+    <div class="content-card" style="border-left: 8px solid #fdbb2d;">
+        <h3 style="color:#1a2a6c; margin-bottom:15px;">💬 ส่งความคิดเห็นถึงสภานักเรียน</h3>
+        <form id="discordForm">
+            <input type="text" id="senderName" placeholder="ชื่อของคุณ" required 
+                style="width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 10px; font-family: 'Kanit';">
+            <textarea id="senderMsg" rows="4" placeholder="พิมพ์ข้อความที่นี่..." required
+                style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; font-family: 'Kanit'; resize: none;"></textarea>
+            <button type="submit" id="submitBtn" 
+                style="background: #1a2a6c; color: white; border: none; padding: 12px 30px; border-radius: 50px; cursor: pointer; font-weight: 600; width: 100%; transition: 0.3s;">
+                ส่งข้อความ
+            </button>
+        </form>
+        <p id="statusMsg" style="margin-top: 10px; text-align: center; font-size: 0.9rem; display: none;"></p>
+    </div>
+</section>
 
-        body {
-            background-color: #f8fafc;
-            color: #333;
-            overflow-x: hidden;
-            scroll-behavior: smooth;
-        }
+<script>
+    document.getElementById('discordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
 
-        /* --- Welcome Section --- */
-        .hero-section {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); 
-            color: white;
-            text-align: center;
-            padding: 20px;
-            position: relative;
-        }
+        const webhookURL = "https://discord.com/api/webhooks/1485616498033692836/N60AQBtnrXNlI1-pSeiHLxBKN7wPzt3Xj3BIlHC5c-pg5CZ75gcL-DEWGDGyVMwHL-kF"; // <--- เอา URL ที่ก๊อปมาจาก Discord มาวางตรงนี้
+        const name = document.getElementById('senderName').value;
+        const message = document.getElementById('senderMsg').value;
+        const btn = document.getElementById('submitBtn');
+        const status = document.getElementById('statusMsg');
 
-        .hero-section h1 {
-            font-size: clamp(2rem, 8vw, 3.5rem);
-            margin-bottom: 20px;
-            z-index: 1;
-            text-shadow: 2px 2px 15px rgba(0,0,0,0.3);
-        }
+        // ป้องกันการกดซ้ำ
+        btn.disabled = true;
+        btn.innerText = "กำลังส่ง...";
 
-        .btn-enter {
-            padding: 15px 45px;
-            font-size: 1.2rem;
-            background-color: white;
-            color: #b21f1f;
-            border: none;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: 0.3s;
-            z-index: 2;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        }
+        const data = {
+            username: "ระบบแจ้งเตือนสภานักเรียน",
+            embeds: [{
+                title: "📌 มีความคิดเห็นใหม่จากเว็บไซต์",
+                color: 16759597, // สีส้มทอง
+                fields: [
+                    { name: "👤 ผู้ส่ง", value: name, inline: true },
+                    { name: "💬 ข้อความ", value: message }
+                ],
+                footer: { text: "ส่งจากเว็บไซต์สภานักเรียนบ้านทุ่มทุ่มฯ" },
+                timestamp: new Date()
+            }]
+        };
 
-        .btn-enter:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            background-color: #f1f5f9;
-        }
-
-        /* --- Story Section --- */
-        .story-section {
-            padding: 80px 20px;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .content-card {
-            background: white;
-            padding: 40px;
-            border-radius: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            border-left: 8px solid #b21f1f;
-        }
-
-        /* --- Music Section --- */
-        .music-section {
-            padding: 40px 20px;
-            background-color: #f1f5f9;
-            text-align: center;
-        }
-
-        .music-card {
-            background: #1a2a6c;
-            color: white;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 15px 30px rgba(26, 42, 108, 0.3);
-        }
-
-        .march-btn {
-            display: inline-block;
-            margin-top: 15px;
-            background-color: #fdbb2d;
-            color: #1a2a6c;
-            text-decoration: none;
-            padding: 12px 30px;
-            border-radius: 50px;
-            font-weight: 600;
-            transition: 0.3s;
-        }
-
-        .march-btn:hover {
-            transform: scale(1.05);
-            background-color: white;
-        }
-
-        /* --- Team Section --- */
-        .team-section {
-            padding: 80px 20px;
-            background-color: #ffffff;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2.2rem;
-            color: #1a2a6c;
-            margin-bottom: 50px;
-        }
-
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .member-card {
-            background: #fff;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            border: 1px solid #eee;
-            transition: 0.3s;
-        }
-
-        .member-card:hover {
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            border-color: #fdbb2d;
-            transform: translateY(-5px);
-        }
-
-        .leader { border-top: 5px solid #b21f1f; background: #fffcfc; }
-        .developer { border-top: 5px solid #1a2a6c; background: #f0f7ff; }
-
-        .member-name { font-weight: 600; color: #333; font-size: 1.1rem; }
-        .member-role { font-size: 0.9rem; color: #666; margin-top: 5px; }
-
-        footer {
-            text-align: center;
-            padding: 40px;
-            background: #1a2a6c;
-            color: white;
-        }
-    </style>
-</head>
-<body>
-
-    <section class="hero-section" id="welcome">
-        <h1>ยินดีต้อนรับสู่สภานักเรียน</h1>
-        <p style="z-index:1; margin-bottom:30px; font-size: 1.2rem; opacity: 0.9;">โรงเรียนบ้านทุ่มทุ่มประชานุเคราะห์</p>
-        <a href="#story" class="btn-enter">ตกลง / เข้าชมเว็บไซต์</a>
-    </section>
-
-    <section class="story-section" id="story">
-        <h2 style="color:#1a2a6c; margin-bottom:30px; text-align:center;">📖 ความเป็นมา</h2>
-        <div class="content-card">
-            <p style="line-height:1.9; font-size: 1.1rem; color: #444;">
-                <strong>โรงเรียนบ้านทุ่มทุ่มประชานุเคราะห์</strong> เป็นสถานศึกษาที่มุ่งเน้นการสร้างเสริมปัญญาและจริยธรรม สภานักเรียนของเราถูกก่อตั้งขึ้นเพื่อเป็นตัวแทนในการทำกิจกรรมและประสานงานระหว่างนักเรียน ครู และชุมชน เพื่อพัฒนาโรงเรียนให้เป็นบ้านหลังที่สองที่อบอุ่นและสร้างสรรค์...
-            </p>
-        </div>
-    </section>
-
-    <section class="music-section">
-        <div class="music-card">
-            <h3>🎵 เพลงมาร์ชประจำโรงเรียน</h3>
-            <p style="margin: 10px 0 20px; opacity: 0.9; font-weight: 300;">เอกลักษณ์แห่งความภาคภูมิใจ ชาวบ้านทุ่มทุ่มประชานุเคราะห์</p>
-            <a href="https://marchprathomschoolthailand.blogspot.com/2022/10/1_2.html" target="_blank" class="march-btn">
-                เข้าสู่หน้าฟังเพลงมาร์ช
-            </a>
-        </div>
-    </section>
-
-    <section class="team-section">
-        <h2 class="section-title">คณะกรรมการสภานักเรียน</h2>
-        <div class="team-grid">
-            
-            <div class="member-card leader">
-                <div class="member-name">รุจิสา ฐานะบำรุง</div>
-                <div class="member-role">ประธานสภา และผู้พัฒนาเว็บไซต์</div>
-            </div>
-            <div class="member-card leader">
-                <div class="member-name">มานิตา ข้อยุ่น</div>
-                <div class="member-role">รองประธานสภา</div>
-            </div>
-            <div class="member-card developer">
-                <div class="member-name">ปิญาพร ศรีธันรัตน์</div>
-                <div class="member-role">คณะกรรมการ (ผู้พัฒนาเว็บไซต์)</div>
-            </div>
-            <div class="member-card developer">
-                <div class="member-name">พงศ์ภีระ ทองโคตร</div>
-                <div class="member-role">คณะกรรมการ (ผู้พัฒนาเว็บไซต์)</div>
-            </div>
-
-            <div class="member-card"><div class="member-name">ณัชชา สิงห์จันทร์</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">ศุภธิดา พรหมจักร</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">ณัฏฐณิชา โนนสวาท</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">พิชญาดา สมประสงค์</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">อารีรัตน์ สูหา</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">ลักขณา กุดสมบัติ</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">กัญญาพัชร พิบูลรัตน์</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">อภัสรา ทวีสอน</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">ชนาเทพ บุญศิริการ</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">จิรายุ ศรีป้อม</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">จิรัชญา คำสุด</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">พัชระ พลแสน</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">เมธาวินี ศรีป้อม</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">ศุกลวัฒ พลโคตร</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">ณัฐชนนท์ อนุสงค์</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">จักรพรรดิ ศรีกลชาญ</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">ศุภณัฏฐ แก้วโพคา</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">ภาคิน แสนจัน</div><div class="member-role">คณะกรรมการ</div></div>
-            <div class="member-card"><div class="member-name">ธิดาพร วันเพ็ชร</div><div class="member-role">คณะกรรมการ</div></div>
-
-        </div>
-    </section>
-
-    <footer>
-        <p>&copy; 2026 Student Council - Ban Thum Thum Prachanukroh School</p>
-        <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 10px;">Created by Student Council Team</p>
-    </footer>
-
-</body>
-</html>
+        fetch(webhookURL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (response.ok) {
+                status.style.display = "block";
+                status.style.color = "green";
+                status.innerText = "✅ ส่งข้อมูลเรียบร้อยแล้ว!";
+                document.getElementById('discordForm').reset();
+            } else {
+                throw new Error();
+            }
+        })
+        .catch(err => {
+            status.style.display = "block";
+            status.style.color = "red";
+            status.innerText = "❌ เกิดข้อผิดพลาด กรุณาลองใหม่";
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerText = "ส่งข้อความ";
+            setTimeout(() => { status.style.display = "none"; }, 5000);
+        });
+    });
+                     </script>
+                     
