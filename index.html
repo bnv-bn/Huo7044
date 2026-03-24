@@ -84,6 +84,42 @@
             margin: 0 auto;
         }
 
+        /* --- TikTok Box --- */
+        .tiktok-container {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background-color: #fff9f0;
+            border-radius: 20px;
+            border: 2px dashed #fdbb2d;
+        }
+
+        .tiktok-qr {
+            max-width: 180px;
+            height: auto;
+            border: 5px solid white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 15px 0;
+        }
+
+        .tiktok-btn {
+            display: inline-block;
+            background-color: #010101;
+            color: white;
+            text-decoration: none;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .tiktok-btn:hover {
+            background-color: #fe2c55; /* TikTok Red */
+            transform: scale(1.05);
+        }
+
         .form-group input, .form-group textarea {
             width: 100%;
             padding: 12px;
@@ -265,8 +301,17 @@
 
     <section class="comment-section">
         <div class="content-card" style="border-left: 8px solid #fdbb2d;">
-            <h3 style="color:#1a2a6c; margin-bottom:15px;">💬 ส่งความคิดเห็นถึงสภานักเรียน</h3>
+            <h3 style="color:#1a2a6c; margin-bottom:20px;">💬 ติดตามและส่งความคิดเห็น</h3>
+            
+            <div class="tiktok-container">
+                <p style="font-weight: 600; color: #b21f1f;">นี้คือช่องของพี่ๆสภาน่ะครับ/ค่ะ ช่องทาง TikTok</p>
+                <img src="50003.jpg" alt="TikTok QR Code" class="tiktok-qr">
+                <br>
+                <a href="ใส่ลิงก์TikTokที่นี่" target="_blank" class="tiktok-btn">🎵 เปิดใน TikTok</a>
+            </div>
+
             <form id="discordForm" class="form-group">
+                <p style="margin-bottom: 10px; font-weight: 600;">เขียนข้อความส่งถึงสภานักเรียน:</p>
                 <input type="text" id="senderName" placeholder="ชื่อของคุณ" required>
                 <textarea id="senderMsg" rows="4" placeholder="พิมพ์ข้อความที่นี่..." required style="resize: none;"></textarea>
                 <button type="submit" id="submitBtn" class="submit-btn">ส่งข้อความเข้า Discord</button>
@@ -284,7 +329,6 @@
         document.getElementById('discordForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            // อย่าลืมวาง URL ของ Webhook ที่นี่อีกครั้งนะครับ
             const webhookURL = "https://discord.com/api/webhooks/1485616498033692836/N60AQBtnrXNlI1-pSeiHLxBKN7wPzt3Xj3BIlHC5c-pg5CZ75gcL-DEWGDGyVMwHL-kF"; 
 
             const name = document.getElementById('senderName').value;
@@ -338,3 +382,4 @@
     </script>
 </body>
 </html>
+
