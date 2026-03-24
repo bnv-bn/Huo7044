@@ -94,6 +94,16 @@
             border: 2px dashed #fdbb2d;
         }
 
+        .tiktok-qr-link {
+            display: inline-block;
+            transition: transform 0.3s;
+            text-decoration: none;
+        }
+
+        .tiktok-qr-link:hover {
+            transform: scale(1.05);
+        }
+
         .tiktok-qr {
             max-width: 180px;
             height: auto;
@@ -106,18 +116,19 @@
         .tiktok-btn {
             display: inline-block;
             background-color: #010101;
-            color: white;
+            color: white !important;
             text-decoration: none;
-            padding: 10px 25px;
+            padding: 12px 30px;
             border-radius: 50px;
-            font-size: 0.9rem;
+            font-size: 1rem;
             font-weight: 600;
             transition: 0.3s;
+            margin-top: 10px;
         }
 
         .tiktok-btn:hover {
             background-color: #fe2c55; /* TikTok Red */
-            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(254, 44, 85, 0.4);
         }
 
         .form-group input, .form-group textarea {
@@ -259,7 +270,6 @@
     <section class="team-section">
         <h2 class="section-title">คณะกรรมการสภานักเรียน</h2>
         <div class="team-grid">
-            
             <div class="member-card leader">
                 <div class="member-name">รุจิสา ฐานะบำรุง</div>
                 <div class="member-role">ประธานสภา และผู้พัฒนาเว็บไซต์</div>
@@ -276,7 +286,6 @@
                 <div class="member-name">พงศ์ภีระ ทองโคตร</div>
                 <div class="member-role">คณะกรรมการ (ผู้พัฒนาเว็บไซต์)</div>
             </div>
-
             <div class="member-card"><div class="member-name">ณัชชา สิงห์จันทร์</div><div class="member-role">คณะกรรมการ</div></div>
             <div class="member-card"><div class="member-name">ศุภธิดา พรหมจักร</div><div class="member-role">คณะกรรมการ</div></div>
             <div class="member-card"><div class="member-name">ณัฏฐณิชา โนนสวาท</div><div class="member-role">คณะกรรมการ</div></div>
@@ -304,10 +313,16 @@
             <h3 style="color:#1a2a6c; margin-bottom:20px;">💬 ติดตามและส่งความคิดเห็น</h3>
             
             <div class="tiktok-container">
-                <p style="font-weight: 600; color: #b21f1f;">นี้คือช่องของพี่ๆสภาน่ะครับ/ค่ะ ช่องทาง TikTok</p>
-                <img src="50003.jpg" alt="TikTok QR Code" class="tiktok-qr">
+                <p style="font-weight: 600; color: #b21f1f; margin-bottom: 5px;">นี้คือช่องของพี่ๆสภาน่ะครับ/ค่ะ ช่องทาง TikTok</p>
+                
+                <a href="https://www.tiktok.com/@kanokdxx9wi?_r=1&_t=ZS-94s8i5K1kqW" target="_blank" class="tiktok-qr-link">
+                    <img src="50003.jpg" alt="Scan to Follow TikTok" class="tiktok-qr">
+                </a>
+                
                 <br>
-                <a href="ใส่ลิงก์TikTokที่นี่" target="_blank" class="tiktok-btn">🎵 เปิดใน TikTok</a>
+                <a href="https://www.tiktok.com/@kanokdxx9wi?_r=1&_t=ZS-94s8i5K1kqW" target="_blank" class="tiktok-btn">
+                    🎵 ติดตามเราบน TikTok
+                </a>
             </div>
 
             <form id="discordForm" class="form-group">
@@ -328,9 +343,7 @@
     <script>
         document.getElementById('discordForm').addEventListener('submit', function(e) {
             e.preventDefault();
-
             const webhookURL = "https://discord.com/api/webhooks/1485616498033692836/N60AQBtnrXNlI1-pSeiHLxBKN7wPzt3Xj3BIlHC5c-pg5CZ75gcL-DEWGDGyVMwHL-kF"; 
-
             const name = document.getElementById('senderName').value;
             const message = document.getElementById('senderMsg').value;
             const btn = document.getElementById('submitBtn');
@@ -360,26 +373,20 @@
             })
             .then(response => {
                 if (response.ok) {
-                    status.style.display = "block";
-                    status.style.color = "green";
+                    status.style.display = "block"; status.style.color = "green";
                     status.innerText = "✅ ส่งความคิดเห็นเรียบร้อยแล้ว!";
                     document.getElementById('discordForm').reset();
-                } else {
-                    throw new Error();
-                }
+                } else { throw new Error(); }
             })
             .catch(err => {
-                status.style.display = "block";
-                status.style.color = "red";
+                status.style.display = "block"; status.style.color = "red";
                 status.innerText = "❌ เกิดข้อผิดพลาด กรุณาลองใหม่";
             })
             .finally(() => {
-                btn.disabled = false;
-                btn.innerText = "ส่งข้อความเข้า Discord";
+                btn.disabled = false; btn.innerText = "ส่งข้อความเข้า Discord";
                 setTimeout(() => { status.style.display = "none"; }, 5000);
             });
         });
     </script>
 </body>
 </html>
-
