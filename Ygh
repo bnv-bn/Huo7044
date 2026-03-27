@@ -1,0 +1,12 @@
+local loveboardList = {
+    ["Credit Card Hoverboard"] = true,
+    ["Popstar Hoverboard"] = true,
+    ["Graduation Hat Hoverboard"] = true,
+    ["Surf's Up Hoverboard"] = true,
+    ["Pink Star Board"] = true,
+    ["Ice cream Sandwich Board"] = true,
+    ["Angel Wings"] = true,
+    ["Void Demon Wings"] = true,
+    ["Bath Tub Hoverboard"] = true,
+    ["Rocket Hoverboard"] = true,
+    ["St Patrick's Board"] = true,
