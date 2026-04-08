@@ -1,0 +1,154 @@
+-- [[ JANTHIMA HUB - FLOATING ICON VERSION ]] --
+
+local lp = game.Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+
+-- สร้าง ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "JanthimaFloatingHub"
+ScreenGui.Parent = (gethui and gethui()) or CoreGui -- รองรับทั้งโปรมือถือและคอม
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- 1. สร้างปุ่มวงกลม (Floating Icon)
+local OpenIcon = Instance.new("ImageButton")
+local UICorner_Icon = Instance.new("UICorner")
+
+OpenIcon.Name = "OpenIcon"
+OpenIcon.Parent = ScreenGui
+OpenIcon.BackgroundColor3 = Color3.fromRGB(255, 170, 0) -- สีส้มทองจันทิมา
+OpenIcon.Position = UDim2.new(0.05, 0, 0.4, 0)
+OpenIcon.Size = UDim2.new(0, 50, 0, 50)
+OpenIcon.Image = "rbxassetid://6031070992" -- รูปวงกลม (เปลี่ยน ID รูปได้)
+OpenIcon.Draggable = true -- ลากปุ่มไปวางที่ไหนก็ได้
+
+UICorner_Icon.CornerRadius = UDim.new(1, 0)
+UICorner_Icon.Parent = OpenIcon
+
+-- 2. สร้างเมนูหลัก (MainFrame)
+local MainFrame = Instance.new("Frame")
+local UICorner_Main = Instance.new("UICorner")
+local UIListLayout = Instance.new("UIListLayout")
+local Title = Instance.new("TextLabel")
+
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.Position = UDim2.new(0.5, -100, 0.5, -125)
+MainFrame.Size = UDim2.new(0, 220, 0, 280)
+MainFrame.Visible = false -- เริ่มมาให้ปิดไว้ก่อน
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+UICorner_Main.CornerRadius = UDim.new(0, 10)
+UICorner_Main.Parent = MainFrame
+
+Title.Parent = MainFrame
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "🌙 JANTHIMA MENU"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 18
+Title.Font = Enum.Font.GothamBold
+Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+
+UIListLayout.Parent = MainFrame
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+-- ฟังก์ชันเปิด/ปิดเมนู
+OpenIcon.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- ฟังก์ชันสร้างปุ่มในเมนู
+local function NewButton(name, color)
+    local btn = Instance.new("TextButton")
+    local corner = Instance.new("UICorner")
+    
+    btn.Name = name .. "Btn"
+    btn.Parent = MainFrame
+    btn.Size = UDim2.new(0, 200, 0, 40)
+    btn.BackgroundColor3 = color or Color3.fromRGB(60, 60, 60)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Text = name
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 14
+    
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+    return btn
+end
+
+-- === [ ระบบต่างๆ ] ===
+
+-- 1. ปุ่มวาร์ป
+local tpBtn = NewButton("วาร์ปไปหน้า (+)", Color3.fromRGB(45, 120, 200))
+tpBtn.MouseButton1Click:Connect(function()
+    local char = lp.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, 0, -12)
+    end
+end)
+
+-- 2. ระบบ Spider (ไถลกำแพง)
+local spiderActive = false
+local sBtn = NewButton("Spider Mode: OFF")
+sBtn.MouseButton1Click:Connect(function()
+    spiderActive = not spiderActive
+    sBtn.Text = "Spider Mode: " .. (spiderActive and "ON" or "OFF")
+    sBtn.BackgroundColor3 = spiderActive and Color3.fromRGB(0, 170, 100) or Color3.fromRGB(60, 60, 60)
+end)
+
+-- 3. ระบบ Jump Dash (กระโดดพุ่ง)
+local dashActive = false
+local dBtn = NewButton("Jump Dash: OFF")
+dBtn.MouseButton1Click:Connect(function()
+    dashActive = not dashActive
+    dBtn.Text = "Jump Dash: " .. (dashActive and "ON" or "OFF")
+    dBtn.BackgroundColor3 = dashActive and Color3.fromRGB(0, 170, 100) or Color3.fromRGB(60, 60, 60)
+end)
+
+-- 4. ปุ่มบวกขยาย (Expand Option)
+local expandBtn = NewButton("[ + ] แยกฟังก์ชัน", Color3.fromRGB(200, 150, 0))
+local extraBtn = NewButton("วาร์ปหาคน (เร็วๆนี้)", Color3.fromRGB(100, 100, 100))
+extraBtn.Visible = false
+
+expandBtn.MouseButton1Click:Connect(function()
+    extraBtn.Visible = not extraBtn.Visible
+    expandBtn.Text = extraBtn.Visible and "[ - ] ปิดส่วนขยาย" or "[ + ] แยกฟังก์ชัน"
+end)
+
+-- === [ Loop การทำงาน ] ===
+RunService.Heartbeat:Connect(function()
+    local char = lp.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    
+    -- Spider Mode Logic
+    if spiderActive then
+        local root = char.HumanoidRootPart
+        local ray = Ray.new(root.Position, root.CFrame.LookVector * 2.5)
+        local part = workspace:FindPartOnRay(ray, char)
+        if part then
+            root.Velocity = Vector3.new(root.Velocity.X, 55, root.Velocity.Z)
+        end
+    end
+end)
+
+-- Jump Dash Logic
+lp.CharacterAdded:Connect(function(char)
+    local hum = char:WaitForChild("Humanoid")
+    hum.StateChanged:Connect(function(old, new)
+        if dashActive and new == Enum.HumanoidStateType.Jumping then
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if root then
+                local bv = Instance.new("BodyVelocity", root)
+                bv.MaxForce = Vector3.new(1, 1, 1) * 60000
+                bv.Velocity = root.CFrame.LookVector * 110 -- ความเร็วพุ่ง
+                task.wait(0.2)
+                bv:Destroy()
+            end
+        end
+    end)
+end)
+
