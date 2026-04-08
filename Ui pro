@@ -3,7 +3,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- Main Window
 local Window = Rayfield:CreateWindow({
-Name = "KOMAT Hub",
+Name = "เกรซ Hub",
 LoadingTitle = "Loading...",
 LoadingSubtitle = "by เกรซจิสุดหล่อ",
 ConfigurationSaving = {
