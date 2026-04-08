@@ -1,79 +1,38 @@
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local LP = Players.LocalPlayer
 
+-- Variables
 local TargetPos = nil
-local Looping = false
 local Flying = false
 local FlySpeed = 50
+local Sliding = false
+local SlideSpeed = 50
+local BringingAll = false
 
--- === สร้าง UI หลัก ===
+-- === สร้าง UI หลัก (Draggable & Closable) ===
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 220, 0, 420)
-MainFrame.Position = UDim2.new(0.5, -110, 0.5, -210)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.BorderSizePixel = 0
+MainFrame.Size = UDim2.new(0, 250, 0, 450)
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -225)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainFrame.Active = true
-MainFrame.ClipsDescendants = true
+Instance.new("UICorner", MainFrame)
 
-local Corner = Instance.new("UICorner", MainFrame)
+-- ปุ่มลาก (+)
+local DragBtn = Instance.new("TextLabel", MainFrame)
+DragBtn.Size = UDim2.new(0, 30, 0, 30)
+DragBtn.Text = "+"
+DragBtn.TextColor3 = Color3.new(1,1,1)
+DragBtn.BackgroundTransparency = 1
+DragBtn.TextSize = 25
 
--- ปุ่มลาก (ไอคอน +)
-local DragIcon = Instance.new("TextLabel", MainFrame)
-DragIcon.Size = UDim2.new(0, 30, 0, 30)
-DragIcon.Position = UDim2.new(0, 5, 0, 5)
-DragIcon.Text = "+"
-DragIcon.TextColor3 = Color3.new(1, 1, 1)
-DragIcon.TextSize = 25
-DragIcon.BackgroundTransparency = 1
-
--- ปุ่มย่อหน้าจอ (_)
-local MinButton = Instance.new("TextButton", MainFrame)
-MinButton.Size = UDim2.new(0, 30, 0, 30)
-MinButton.Position = UDim2.new(1, -65, 0, 5)
-MinButton.Text = "_"
-MinButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-MinButton.TextColor3 = Color3.new(1, 1, 1)
-
--- ปุ่มปิด (X)
-local CloseButton = Instance.new("TextButton", MainFrame)
-CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Position = UDim2.new(1, -35, 0, 5)
-CloseButton.Text = "X"
-CloseButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-CloseButton.TextColor3 = Color3.new(1, 1, 1)
-
--- พื้นที่ใส่ปุ่ม
-local Scroll = Instance.new("ScrollingFrame", MainFrame)
-Scroll.Size = UDim2.new(1, 0, 1, -45)
-Scroll.Position = UDim2.new(0, 0, 0, 45)
-Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 1.5, 0)
-local UIList = Instance.new("UIListLayout", Scroll)
-UIList.Padding = UDim.new(0, 5)
-UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
--- === ฟังก์ชันเสริม ===
-local function CreateButton(txt, color, parent, callback)
-    local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(0.9, 0, 0, 35)
-    btn.Text = txt
-    btn.BackgroundColor3 = color
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    Instance.new("UICorner", btn)
-    btn.MouseButton1Click:Connect(callback)
-    return btn
-end
-
--- 1. ลากหน้าต่าง (ผ่านปุ่มบวก)
-local dragging, dragStart, startPos
-DragIcon.InputBegan:Connect(function(input)
+-- ระบบลาก (Draggable)
+local dragStart, startPos, dragging
+DragBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
+        dragging = true dragStart = input.Position startPos = MainFrame.Position
     end
 end)
 UserInputService.InputChanged:Connect(function(input)
@@ -82,95 +41,113 @@ UserInputService.InputChanged:Connect(function(input)
         MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-end)
+UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 
--- 2. ย่อหน้าจอ
-local minimized = false
-MinButton.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    MainFrame:TweenSize(minimized and UDim2.new(0, 220, 0, 40) or UDim2.new(0, 220, 0, 420), "Out", "Quart", 0.3, true)
-end)
+-- ส่วน List ปุ่ม
+local Scroll = Instance.new("ScrollingFrame", MainFrame)
+Scroll.Size = UDim2.new(1, 0, 1, -40)
+Scroll.Position = UDim2.new(0, 0, 0, 40)
+Scroll.BackgroundTransparency = 1
+Scroll.CanvasSize = UDim2.new(0, 0, 2, 0)
+local UIList = Instance.new("UIListLayout", Scroll)
+UIList.Padding = UDim.new(0, 5)
+UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- 3. Spiderman Mode (ขยับทีละนิด)
-CreateButton("Spiderman Mode", Color3.fromRGB(180, 0, 0), Scroll, function()
+-- === ฟังก์ชันสร้างปุ่มพร้อมปุ่มแยกด้านขวา ===
+local function CreateComplexButton(txt, color, callback, subCallback)
+    local Container = Instance.new("Frame", Scroll)
+    Container.Size = UDim2.new(0.95, 0, 0, 40)
+    Container.BackgroundTransparency = 1
+
+    local MainBtn = Instance.new("TextButton", Container)
+    MainBtn.Size = UDim2.new(0.75, 0, 1, 0)
+    MainBtn.Text = txt
+    MainBtn.BackgroundColor3 = color
+    MainBtn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", MainBtn)
+    MainBtn.MouseButton1Click:Connect(callback)
+
+    local SubBtn = Instance.new("TextButton", Container)
+    SubBtn.Size = UDim2.new(0.2, 0, 1, 0)
+    SubBtn.Position = UDim2.new(0.8, 0, 0, 0)
+    SubBtn.Text = "⚙️"
+    SubBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    SubBtn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", SubBtn)
+    SubBtn.MouseButton1Click:Connect(subCallback)
+end
+
+-- 1. Smooth Spiderman (Lerp TP)
+CreateComplexButton("SMOOTH SPIDER", Color3.fromRGB(150, 0, 0), function()
     if TargetPos then
-        local char = LocalPlayer.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            task.spawn(function()
-                for i = 1, 20 do -- แบ่งเป็น 20 ขั้น
-                    char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame:Lerp(TargetPos, 0.15)
-                    task.wait(0.05)
-                end
-            end)
-        end
+        local char = LP.Character
+        task.spawn(function()
+            for i = 0, 1, 0.05 do -- ความละเอียดของการขยับ
+                if not char or not char:FindFirstChild("HumanoidRootPart") then break end
+                char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame:Lerp(TargetPos, i)
+                task.wait(0.02)
+            end
+        end)
     end
-end)
+end, function() print("ตั้งค่า Spider") end)
 
--- 4. Wall TP (ทะลุกำแพงไปข้างหน้า)
-CreateButton("Wall TP Forward", Color3.fromRGB(0, 120, 120), Scroll, function()
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, 0, -10)
-    end
-end)
-
--- 5. Smooth Speed
-CreateButton("Smooth Speed (Toggle)", Color3.fromRGB(0, 150, 0), Scroll, function()
-    local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    hum.WalkSpeed = (hum.WalkSpeed == 16) and 60 or 16
-end)
-
--- 6. Jump Power (1-100)
-CreateButton("Jump High (100)", Color3.fromRGB(150, 150, 0), Scroll, function()
-    local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    hum.JumpPower = 100
-    hum.UseJumpPower = true
-end)
-
--- 7. Player TP (ดึงคนใกล้ที่สุดมา)
-CreateButton("Get Nearest Player", Color3.fromRGB(100, 0, 150), Scroll, function()
-    local myRoot = LocalPlayer.Character.HumanoidRootPart
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            p.Character.HumanoidRootPart.CFrame = myRoot.CFrame * CFrame.new(0, 0, -5)
-            break 
-        end
-    end
-end)
-
--- 8. Fly Mode (UI แยก)
-CreateButton("Open Fly Menu", Color3.fromRGB(50, 50, 50), Scroll, function()
-    local FlyGui = Instance.new("Frame", ScreenGui)
-    FlyGui.Size = UDim2.new(0, 150, 0, 100)
-    FlyGui.Position = UDim2.new(0, 50, 0.5, 0)
-    FlyGui.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    Instance.new("UICorner", FlyGui)
-    
-    CreateButton("Fly Toggle", Color3.fromRGB(0, 100, 200), FlyGui, function()
-        Flying = not Flying
-        local bg = Instance.new("BodyGyro", LocalPlayer.Character.HumanoidRootPart)
-        local bv = Instance.new("BodyVelocity", LocalPlayer.Character.HumanoidRootPart)
-        bg.P = 9e4 bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9) bg.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
-        bv.Velocity = Vector3.new(0,0.1,0) bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+-- 2. Fly Mode พร้อมปรับความเร็ว
+CreateComplexButton("FLY MODE", Color3.fromRGB(0, 100, 200), function()
+    Flying = not Flying
+    if Flying then
+        local bv = Instance.new("BodyVelocity", LP.Character.HumanoidRootPart)
+        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
         task.spawn(function()
             while Flying do
-                bv.Velocity = LocalPlayer.Character.Humanoid:GetMoveDirection() * FlySpeed
+                bv.Velocity = LP.Character.Humanoid:GetMoveDirection() * FlySpeed
                 task.wait()
             end
-            bg:Destroy() bv:Destroy()
+            bv:Destroy()
         end)
+    end
+end, function()
+    FlySpeed = (FlySpeed == 50) and 150 or 50
+    print("Fly Speed: "..FlySpeed)
+end)
+
+-- 3. Bring All Players (Loop)
+CreateComplexButton("BRING ALL", Color3.fromRGB(100, 0, 150), function()
+    BringingAll = not BringingAll
+    task.spawn(function()
+        while BringingAll do
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    p.Character.HumanoidRootPart.CFrame = LP.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
+                end
+            end
+            task.wait(0.5)
+        end
     end)
-    
-    CreateButton("Close Fly", Color3.fromRGB(100, 0, 0), FlyGui, function() FlyGui:Destroy() Flying = false end)
+end, function() BringingAll = false print("ยกเลิกดึงคน") end)
+
+-- 4. Slide Mode (Auto Run สำหรับ Evade/ทุกแมพ)
+CreateComplexButton("SLIDE MODE", Color3.fromRGB(0, 150, 100), function()
+    Sliding = not Sliding
+    task.spawn(function()
+        while Sliding do
+            local char = LP.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid:Move(Vector3.new(0, 0, -1), true) -- บังคับเดินไปข้างหน้า
+                char.Humanoid.WalkSpeed = SlideSpeed
+            end
+            task.wait()
+        end
+        LP.Character.Humanoid.WalkSpeed = 16
+    end)
+end, function()
+    SlideSpeed = (SlideSpeed == 50) and 100 or 50
+    print("Slide Speed: "..SlideSpeed)
 end)
 
--- ปุ่มพื้นฐานอื่นๆ
-CreateButton("SET POS", Color3.fromRGB(50, 150, 50), Scroll, function()
-    TargetPos = LocalPlayer.Character.HumanoidRootPart.CFrame
-end)
-CreateButton("DELETE SET", Color3.fromRGB(100, 100, 100), Scroll, function() TargetPos = nil end)
+-- 5. Wall TP (Forward)
+CreateComplexButton("WALL TP", Color3.fromRGB(80, 80, 80), function()
+    LP.Character.HumanoidRootPart.CFrame *= CFrame.new(0,0,-12)
+end, function() print("Set Distance") end)
 
-CloseButton.MouseButton1Click:Connect(function() ScreenGui:Destroy() Looping = false Flying = false end)
-
+-- ปุ่มพื้นฐาน
+CreateComplexButton("SET POS", Color3.fromRGB(0, 120, 0), function() TargetPos = LP.Character.HumanoidRootPart.CFrame end, function() TargetPos = nil end)
