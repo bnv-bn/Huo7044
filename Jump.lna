@@ -1,0 +1,51 @@
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- === การตั้งค่า (Settings) ===
+local isEnabled = true       -- เปิด-ปิดระบบ (true = เปิด, false = ปิด)
+local dashSpeed = 50         -- ความเร็วในการพุ่ง
+local cooldown = 1           -- ระยะเวลาพัก (วินาที)
+local canDash = true
+
+-- === ฟังก์ชันการพุ่ง ===
+local function dashForward()
+    if not isEnabled or not canDash then return end
+    
+    canDash = false
+    local rootPart = character:WaitForChild("HumanoidRootPart")
+    
+    -- สร้างแรงผลักไปข้างหน้าตามทิศทางที่ตัวละครหัน
+    local velocity = Instance.new("BodyVelocity")
+    velocity.MaxForce = Vector3.new(100000, 0, 100000) -- เน้นพุ่งแนวราบ
+    velocity.Velocity = rootPart.CFrame.LookVector * dashSpeed
+    velocity.Parent = rootPart
+    
+    -- ลบแรงผลักออกหลังจากพุ่งไปแป๊บเดียว (เพื่อให้ตัวละครไม่ไหลยาว)
+    task.wait(0.2)
+    velocity:Destroy()
+    
+    -- รอ Cooldown
+    task.wait(cooldown)
+    canDash = true
+end
+
+-- === ตรวจจับการกดปุ่ม (เช่น กด Spacebar หรือปุ่มที่ต้องการ) ===
+UserInputService.JumpRequest:Connect(function()
+    -- ตรวจสอบว่าตัวละครอยู่กลางอากาศ (กำลังกระโดด) ถึงจะพุ่ง
+    if humanoid:GetState() == Enum.HumanoidStateType.Jumping or humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+        dashForward()
+    end
+end)
+
+-- ตัวอย่างการสร้างปุ่ม เปิด/ปิด (แบบง่ายผ่าน Console หรือปุ่มคีย์บอร์ด)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.T then -- กด T เพื่อเปิด/ปิด
+        isEnabled = not isEnabled
+        print("System Enabled:", isEnabled)
+    end
+end)
+
