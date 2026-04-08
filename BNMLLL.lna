@@ -1,255 +1,250 @@
--- [[ เกรซจิ HUB - SUPER ULTIMATE VERSION 2026 ]] --
-local lp = game.Players.LocalPlayer
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("เมนูภาษาไทย ALL-IN-ONE (100+ คำสั่ง)", "BloodTheme")
 
--- === [ Setup GUI ] ===
-local ScreenGui = Instance.new("ScreenGui", (gethui and gethui()) or game:GetService("CoreGui"))
-ScreenGui.Name = "GracieHub_Ultimate"
-ScreenGui.ResetOnSpawn = false
-
--- ปุ่มเปิด/ปิด (Rainbow Circle)
-local OpenIcon = Instance.new("ImageButton", ScreenGui)
-OpenIcon.Size = UDim2.new(0, 60, 0, 60)
-OpenIcon.Position = UDim2.new(0, 10, 0.4, 0)
-OpenIcon.Draggable = true
-Instance.new("UICorner", OpenIcon).CornerRadius = UDim.new(1, 0)
-spawn(function() while task.wait() do OpenIcon.BackgroundColor3 = Color3.fromHSV(tick()%5/5, 1, 1) end end)
-
--- เมนูหลัก (Scrolling)
-local MainFrame = Instance.new("ScrollingFrame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 350, 0, 500)
-MainFrame.Position = UDim2.new(0.5, -175, 0.5, -250)
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-MainFrame.Visible = false
-MainFrame.CanvasSize = UDim2.new(0, 0, 25, 0) -- ยาวพิเศษสำหรับทุกฟังก์ชัน
-MainFrame.ScrollBarThickness = 8
-Instance.new("UICorner", MainFrame)
-
-local Layout = Instance.new("UIListLayout", MainFrame)
-Layout.Padding = UDim.new(0, 8)
-Layout.HorizontalAlignment = "Center"
-
--- === [ ฟังก์ชันช่วยสร้าง UI ] ===
-local function CreateTitle(txt)
-    local t = Instance.new("TextLabel", MainFrame)
-    t.Size = UDim2.new(1, 0, 0, 35)
-    t.Text = "--- " .. txt .. " ---"
-    t.TextColor3 = Color3.new(1, 0.8, 0)
-    t.BackgroundTransparency = 1
-    t.Font = Enum.Font.GothamBold
+-- ฟังก์ชันรันคำสั่งเบื้องหลัง
+local function RunIY(cmd)
+    if not _G.IY_Loaded then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Edgeiy/infiniteyield/master/source"))()
+        _G.IY_Loaded = true
+        task.wait(0.5)
+    end
+    game:GetService("VirtualInputManager"):SendKeyEvent(true, "Semicolon", false, game)
+    task.wait(0.05)
+    game:GetService("VirtualInputManager"):SendText(cmd)
+    game:GetService("VirtualInputManager"):SendKeyEvent(true, "Enter", false, game)
 end
 
-local function CreateButton(txt, cb, parent)
-    local b = Instance.new("TextButton", parent or MainFrame)
-    b.Size = UDim2.new(0, 300, 0, 35)
-    b.Text = txt
-    b.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    b.TextColor3 = Color3.new(1,1,1)
-    b.Font = Enum.Font.GothamMedium
-    Instance.new("UICorner", b)
-    b.MouseButton1Click:Connect(cb)
-    return b
-end
+-- ==========================================
+-- หมวดที่ 1: การเคลื่อนที่ (Movement)
+-- ==========================================
+local Tab1 = Window:NewTab("การเคลื่อนที่")
+local Move = Tab1:NewSection("ตั้งค่าการเคลื่อนที่")
 
-local function CreateTextBox(ph, cb)
-    local t = Instance.new("TextBox", MainFrame)
-    t.Size = UDim2.new(0, 300, 0, 30)
-    t.PlaceholderText = ph
-    t.Text = ""
-    t.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    t.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner", t)
-    t.FocusLost:Connect(function() cb(t.Text) end)
-    return t
-end
+Move:NewButton("บิน (Fly)", "กดเพื่อเริ่มบิน", function() RunIY("fly") end)
+Move:NewButton("เลิกบิน (Unfly)", "กลับมาเดินปกติ", function() RunIY("unfly") end)
+Move:NewButton("ทะลุกำแพง (Noclip)", "เดินทะลุทุกอย่าง", function() RunIY("noclip") end)
+Move:NewButton("ปิดทะลุกำแพง (Clip)", "ชนกำแพงปกติ", function() RunIY("clip") end)
+Move:NewButton("เดินบนอากาศ", "เหยียบอากาศได้", function() RunIY("airwalk") end)
+Move:NewButton("หยุดเดินบนอากาศ", "ปิดระบบ", function() RunIY("unairwalk") end)
+Move:NewButton("กระโดดไม่จำกัด", "กระโดดกี่ครั้งก็ได้บนฟ้า", function() RunIY("infjump") end)
+Move:NewButton("ว่ายน้ำบนบก", "ทำท่าว่ายน้ำบนพื้น", function() RunIY("swim") end)
 
--- === [ 1. ระบบคลายเครียด (เป่ายิ้งฉุบ) ] ===
-CreateTitle("🎮 ระบบคลายเครียด")
-local RPS_Label = Instance.new("TextLabel", MainFrame)
-RPS_Label.Size = UDim2.new(0, 300, 0, 40)
-RPS_Label.Text = "เลือก ค้อน, กรรไกร หรือ กระดาษ"
-RPS_Label.TextColor3 = Color3.new(1,1,1)
-RPS_Label.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+local MoveSet = Tab1:NewSection("ระบุตัวเลขเคลื่อนที่")
+MoveSet:NewTextBox("ตั้งความเร็ว (Speed)", "ใส่เลขความเร็วที่ต้องการ", function(t) RunIY("ws " .. t) end)
+MoveSet:NewTextBox("ตั้งแรงกระโดด (Jump)", "ใส่เลขแรงกระโดดที่ต้องการ", function(t) RunIY("jp " .. t) end)
+MoveSet:NewTextBox("ตั้งแรงดึงดูด (Gravity)", "ใส่เลขแรงโน้มถ่วง", function(t) RunIY("gravity " .. t) end)
+MoveSet:NewTextBox("ความเร็วบิน (Fly Speed)", "ใส่เลขความเร็วตอนบิน", function(t) RunIY("flyspeed " .. t) end)
 
-local function PlayRPS(playerChoice)
-    local choices = {"ค้อน", "กรรไกร", "กระดาษ"}
-    local botChoice = choices[math.random(1, 3)]
-    local result = ""
-    if playerChoice == botChoice then result = "เสมอ!"
-    elseif (playerChoice == "ค้อน" and botChoice == "กรรไกร") or 
-           (playerChoice == "กรรไกร" and botChoice == "กระดาษ") or 
-           (playerChoice == "กระดาษ" and botChoice == "ค้อน") then
-        result = "คุณชนะ! 🎉"
-    else result = "คุณแพ้! 💀" end
-    RPS_Label.Text = "บอทออก: "..botChoice.." | "..result
-end
+-- ==========================================
+-- หมวดที่ 2: การมองเห็น (Visual/ESP)
+-- ==========================================
+local Tab2 = Window:NewTab("การมองเห็น")
+local Visual = Tab2:NewSection("มองทะลุและแสงสว่าง")
 
-local rpsFrame = Instance.new("Frame", MainFrame)
-rpsFrame.Size = UDim2.new(0, 300, 0, 40)
-rpsFrame.BackgroundTransparency = 1
-local rL = Instance.new("UIListLayout", rpsFrame)
-rL.FillDirection = "Horizontal"
-rL.Padding = UDim.new(0, 5)
+Visual:NewButton("เปิด ESP (มองผู้เล่น)", "เห็นชื่อทะลุกำแพง", function() RunIY("esp") end)
+Visual:NewButton("ปิด ESP", "ปิดการส่อง", function() RunIY("unesp") end)
+Visual:NewButton("ส่องเป็นสี (Chams)", "ตัวละครเป็นสีๆ", function() RunIY("chams") end)
+Visual:NewButton("ปิดส่องเป็นสี", "ปิด Chams", function() RunIY("unchams") end)
+Visual:NewButton("เปิดเอ็กซเรย์ (Xray)", "มองทะลุฉาก/กำแพง", function() RunIY("xray") end)
+Visual:NewButton("ปิดเอ็กซเรย์", "ปิดการมองทะลุ", function() RunIY("unxray") end)
+Visual:NewButton("เปิดไฟสว่าง (Fullbright)", "ลบเงาทั้งแมพ", function() RunIY("fullbright") end)
+Visual:NewButton("ลบหมอก (Nofog)", "มองระยะไกลได้ชัด", function() RunIY("nofog") end)
+Visual:NewTextBox("ปรับมุมมอง (FOV)", "ใส่เลขระยะสายตา", function(t) RunIY("fov " .. t) end)
 
-CreateButton("✊", function() PlayRPS("ค้อน") end, rpsFrame).Size = UDim2.new(0, 95, 1, 0)
-CreateButton("✌️", function() PlayRPS("กรรไกร") end, rpsFrame).Size = UDim2.new(0, 95, 1, 0)
-CreateButton("✋", function() PlayRPS("กระดาษ") end, rpsFrame).Size = UDim2.new(0, 95, 1, 0)
+-- ==========================================
+-- หมวดที่ 3: จัดการคนอื่น (Player Admin)
+-- ==========================================
+local Tab3 = Window:NewTab("จัดการคนอื่น")
+local Target = Tab3:NewSection("ใส่ชื่อผู้เล่นเป้าหมาย")
 
--- === [ 2. ระบบคิดเลขเร็ว ] ===
-CreateTitle("📚 ระบบการศึกษา (Math)")
-CreateButton("🧮 สุ่มโจทย์เลข (อนุบาล - แคลคูลัส)", function()
-    local types = {"+", "-", "*", "/", "^", "Integral", "Fraction"}
-    local mode = types[math.random(1, #types)]
-    local q = ""
-    if mode == "+" then q = math.random(1,1000) .. " + " .. math.random(1,1000)
-    elseif mode == "^" then q = math.random(1,10) .. " ^ " .. math.random(2,4)
-    elseif mode == "Integral" then q = "∫(x^"..math.random(2,5)..") dx"
-    else q = "โจทย์เลขพื้นฐาน 1,000 / "..math.random(1,10) end
-    RPS_Label.Text = "โจทย์: " .. q
+Target:NewTextBox("วาร์ปไปหา (Goto)", "ใส่ชื่อคนที่จะไปหา", function(t) RunIY("goto " .. t) end)
+Target:NewTextBox("ดึงมาหา (Bring)", "ดึงเขามาหาเรา", function(t) RunIY("bring " .. t) end)
+Target:NewTextBox("ส่องกล้อง (View)", "ดูหน้าจอเขา", function(t) RunIY("view " .. t) end)
+Target:NewButton("เลิกส่อง (Unview)", "ดึงกล้องกลับมา", function() RunIY("unview") end)
+Target:NewTextBox("ถีบกระเด็น (Fling)", "หมุนจนเขากระเด็น", function(t) RunIY("fling " .. t) end)
+Target:NewTextBox("ฆ่า (Kill)", "เฉพาะเกมที่มีช่องโหว่", function(t) RunIY("kill " .. t) end)
+Target:NewTextBox("เกาะหลัง (Attach)", "ไปติดกับตัวเขา", function(t) RunIY("attach " .. t) end)
+Target:NewTextBox("ขโมยของ (Steal Tools)", "ดึงของจากเขามา", function(t) RunIY("steal " .. t) end)
+
+-- ==========================================
+-- หมวดที่ 4: ตัวละครและสถานะ (Character)
+-- ==========================================
+local Tab4 = Window:NewTab("ตัวละคร")
+local Char = Tab4:NewSection("สถานะตัวเรา")
+
+Char:NewButton("เกิดใหม่ (Refresh)", "รีเซ็ตตัวแบบไม่ตาย", function() RunIY("re") end)
+Char:NewButton("ฆ่าตัวตาย (Reset)", "รีเซ็ตตัวละคร", function() RunIY("reset") end)
+Char:NewButton("ตัวลอย (Sit)", "ท่านั่ง", function() RunIY("sit") end)
+Char:NewButton("ตัวแข็ง (Anchor)", "หยุดนิ่งกลางอากาศ", function() RunIY("anchor") end)
+Char:NewButton("ลบตัวตน (Invisible)", "ตัวล่องหน (บางเกม)", function() RunIY("invisible") end)
+Char:NewButton("แขนยาว (Long Arms)", "เพิ่มระยะการตี", function() RunIY("longarms") end)
+Char:NewTextBox("ขยายขนาดตัว (Size)", "ใส่เลขความใหญ่", function(t) RunIY("size " .. t) end)
+Char:NewTextBox("หัวโต (Big Head)", "ขยายขนาดหัว", function(t) RunIY("bhead " .. t) end)
+
+-- ==========================================
+-- หมวดที่ 5: คำสั่งแกล้งคน (Troll)
+-- ==========================================
+local Tab5 = Window:NewTab("สายเกรียน")
+local Troll = Tab5:NewSection("ป่วนเซิร์ฟเวอร์")
+
+Troll:NewButton("โหมดหมุนรัว (Spin)", "หมุนตัวเป็นลูกข่าง", function() RunIY("spin") end)
+Troll:NewButton("หยุดหมุน", "เลิกหมุน", function() RunIY("unspin") end)
+Troll:NewButton("ตัวสั่น (Jitter)", "เขย่าตัวรัวๆ", function() RunIY("jitter") end)
+Troll:NewButton("ลบพื้น (Delete Floor)", "ลบสิ่งที่เหยียบอยู่", function() RunIY("delfloor") end)
+Troll:NewButton("คอยาว (Long Neck)", "ยืดคอขึ้นฟ้า", function() RunIY("longneck") end)
+Troll:NewButton("ไม่มีหัว", "ลบหัวออก", function() RunIY("nohead") end)
+Troll:NewButton("ท่าเต้นสุ่ม", "เต้นหลายๆ แบบ", function() RunIY("dance") end)
+
+-- ==========================================
+-- หมวดที่ 6: ระบบเซิร์ฟเวอร์ (Misc/Server)
+-- ==========================================
+local Tab6 = Window:NewTab("ระบบทั่วไป")
+local Misc = Tab6:NewSection("เครื่องมือเสริม")
+
+Misc:NewButton("ดู FPS", "แสดงความลื่น", function() RunIY("fps") end)
+Misc:NewButton("เปิด Console", "ดูประวัติระบบ", function() RunIY("console") end)
+Misc:NewButton("ก็อปปี้ตำแหน่ง (Copy Pos)", "บันทึกพิกัดที่ยืน", function() RunIY("copypos") end)
+Misc:NewButton("เซิร์ฟเวอร์ใหม่ (Rejoin)", "ออกแล้วเข้าห้องเดิม", function() RunIY("rejoin") end)
+Misc:NewButton("ย้ายเซิร์ฟเวอร์ (Server Hop)", "หาห้องใหม่", function() RunIY("serverhop") end)
+Misc:NewButton("ออกจากเกม", "ปิด Roblox ทันที", function() RunIY("exit") end)
+Misc:NewButton("เปิด IY ดั้งเดิม", "กรณีต้องการใช้คำสั่งอื่น", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Edgeiy/infiniteyield/master/source"))() end)
+
+print("สคริปต์เมนูไทยพร้อมใช้งาน!")
+-- ==========================================
+-- หมวดที่ 7: คำสั่งเกี่ยวกับไอเทม/ของ (Tools)
+-- ==========================================
+local Tab7 = Window:NewTab("ไอเทม/ของ")
+local Tool = Tab7:NewSection("จัดการอุปกรณ์")
+
+Tool:NewButton("หยิบของทุกอย่างในแมพ", "ดึงไอเทมที่ตกอยู่มาให้เรา", function() RunIY("gettools") end)
+Tool:NewButton("ดึงของจากคนตาย", "เก็บของที่ตกจากคนตาย", function() RunIY("grabtools") end)
+Tool:NewButton("ทิ้งของทั้งหมด", "โยนของในตัวทิ้ง", function() RunIY("droptools") end)
+Tool:NewButton("ลบของทั้งหมด", "ลบของในกระเป๋าทิ้ง", function() RunIY("removetools") end)
+Tool:NewTextBox("ให้ของคนอื่น", "ใส่ชื่อคนที่จะให้ของ (ต้องถือของ)", function(t) RunIY("givetool " .. t) end)
+Tool:NewButton("คลิกวาร์ป (TP Tool)", "ได้รีโมทกดวาร์ปด้วยเมาส์", function() RunIY("tptool") end)
+Tool:NewButton("เพิ่มระยะหยิบของ", "หยิบของได้ไกลขึ้น", function() RunIY("reach") end)
+
+-- ==========================================
+-- หมวดที่ 8: ปรับแต่งสภาพแวดล้อม (Environment)
+-- ==========================================
+local Tab8 = Window:NewTab("โลก/สภาพอากาศ")
+local World = Tab8:NewSection("ปรับแต่งแมพ")
+
+World:NewButton("ทำลายท้องฟ้า", "ลบท้องฟ้าเดิมออก", function() RunIY("nosky") end)
+World:NewButton("เปิดโหมดกลางคืน", "เปลี่ยนเวลาเป็นกลางคืน", function() RunIY("night") end)
+World:NewButton("เปิดโหมดกลางวัน", "เปลี่ยนเวลาเป็นกลางวัน", function() RunIY("day") end)
+World:NewTextBox("ตั้งเวลาในเกม", "ใส่ตัวเลขเวลา (0-24)", function(t) RunIY("time " .. t) end)
+World:NewTextBox("เปลี่ยนสีหมอก", "ใส่ชื่อสีภาษาอังกฤษ", function(t) RunIY("fogcolor " .. t) end)
+World:NewButton("ลบต้นไม้/ของตกแต่ง", "ช่วยลดอาการแลค", function() RunIY("lowrender") end)
+World:NewButton("ทำให้พื้นลื่น", "เหมือนเดินบนน้ำแข็ง", function() RunIY("ice") end)
+World:NewButton("ทำให้พื้นปกติ", "ปิดระบบพื้นลื่น", function() RunIY("unice") end)
+
+-- ==========================================
+-- หมวดที่ 9: คำสั่งพิเศษ/ล้ำๆ (Advanced)
+-- ==========================================
+local Tab9 = Window:NewTab("คำสั่งพิเศษ")
+local Adv = Tab9:NewSection("คำสั่งระดับสูง")
+
+Adv:NewButton("เปิดคีย์บอร์ดเสมือน", "สำหรับคนกดปุ่มไม่ได้", function() RunIY("keyboard") end)
+Adv:NewButton("เปิดดูแชทที่ถูกลบ", "ดู Log การคุย", function() RunIY("chatlogs") end)
+Adv:NewTextBox("จำลองการเติมเงิน", "ใส่ชื่อไอเทม (หลอกเพื่อน)", function(t) RunIY("showpurchase " .. t) end)
+Adv:NewButton("สุ่มสีตัวละคร", "เปลี่ยนสีตัวไปเรื่อยๆ", function() RunIY("loopcolor") end)
+Adv:NewButton("หยุดสุ่มสี", "ปิดระบบเปลี่ยนสี", function() RunIY("unloopcolor") end)
+Adv:NewTextBox("เปลี่ยนชื่อตัวเอง", "เปลี่ยนชื่อบนหัว (เราเห็นคนเดียว)", function(t) RunIY("name " .. t) end)
+Adv:NewButton("ปิดชื่อปลอม", "กลับมาใช้ชื่อเดิม", function() RunIY("unname") end)
+Adv:NewButton("โหมดพระเจ้า (Fly + Noclip)", "บินทะลุทุกอย่าง", function() RunIY("flynoclip") end)
+Adv:NewButton("ปิดโหมดพระเจ้า", "ปิดบินและปิดทะลุ", function() 
+    RunIY("unfly")
+    RunIY("clip")
 end)
 
--- === [ 3. ระบบ Obby Spawner ] ===
-CreateTitle("🧗 ระบบสร้าง Obby (Tier 1-13)")
-for i = 1, 13 do
-    CreateButton("สร้าง Obby Tier " .. i, function()
-        local part = Instance.new("Part", workspace)
-        part.Size = Vector3.new(10, 1, 10)
-        part.CFrame = lp.Character.HumanoidRootPart.CFrame * CFrame.new(0, -3, -15 * i)
-        part.Anchored = true
-        part.BrickColor = BrickColor.Random()
-        Instance.new("SelectionBox", part).Adornee = part
-    end)
-end
+-- ==========================================
+-- หมวดที่ 10: ท่าทางและแอนิเมชั่น (Animations)
+-- ==========================================
+local Tab10 = Window:NewTab("ท่าทาง/แอนิเมชั่น")
+local Anim = Tab10:NewSection("ท่าทางพิเศษ")
 
--- === [ 4. ระบบเสกรถ 3 แบบ ] ===
-CreateTitle("🏎️ ระบบยานพาหนะ")
-local function SpawnCar(type)
-    local seat = Instance.new("VehicleSeat", workspace)
-    seat.Position = lp.Character.HumanoidRootPart.Position + Vector3.new(0, 2, 5)
-    local body = Instance.new("Part", seat)
-    body.Size = (type == "Bike" and Vector3.new(2,2,4) or Vector3.new(6,2,10))
-    body.BrickColor = BrickColor.new("Bright red")
-    seat.MaxSpeed = 1000
-    seat.SteerFloat = 1
-end
-CreateButton("🏎️ รถสปอร์ต", function() SpawnCar("Sport") end)
-CreateButton("🛻 รถกระบะ", function() SpawnCar("Truck") end)
-CreateButton("🏍️ มอเตอร์ไซค์", function() SpawnCar("Bike") end)
+Anim:NewButton("ท่าซอมบี้ (Zombie)", "เดินแบบซอมบี้", function() RunIY("zombie") end)
+Anim:NewButton("ท่าเมา (Drunk)", "เดินโซเซเหมือนคนเมา", function() RunIY("drunk") end)
+Anim:NewButton("ท่าปีศาจ (Ghoulish)", "ท่าทางน่ากลัว", function() RunIY("ghoulish") end)
+Anim:NewButton("ท่ายืนนิ่ง (Idle)", "ยืนแบบเท่ๆ", function() RunIY("idles") end)
+Anim:NewButton("ท่าคลาน (Crawl)", "หมอบคลานกับพื้น", function() RunIY("crawl") end)
+Anim:NewButton("ท่ากระโดดตบ (Jacks)", "ออกกำลังกาย", function() RunIY("jacks") end)
+Anim:NewButton("ท่ายันพื้น (Pushups)", "วิดพื้น", function() RunIY("pushups") end)
+Anim:NewButton("ท่ากวนประสาท (Annoy)", "ขยับตัวกวนๆ", function() RunIY("annoy") end)
+Anim:NewButton("หยุดแอนิเมชั่นทั้งหมด", "กลับมาท่าเดินปกติ", function() RunIY("unanim") end)
 
--- === [ 5. ระบบวาร์ป (Teleport) ] ===
-CreateTitle("📍 ระบบวาร์ปผู้เล่น")
-local targetName = ""
-CreateTextBox("ชื่อผู้เล่นที่จะวาร์ป", function(t) targetName = t end)
-CreateButton("วาร์ปไปหา (ครั้งเดียว)", function()
-    for _, v in pairs(game.Players:GetPlayers()) do
-        if v.Name:lower():match(targetName:lower()) then
-            lp.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
-        end
+-- ==========================================
+-- หมวดที่ 11: การตรวจสอบและสายลับ (Audit/Spy)
+-- ==========================================
+local Tab11 = Window:NewTab("ตรวจสอบ/สายลับ")
+local Spy = Tab11:NewSection("ส่องระบบ")
+
+Spy:NewButton("ส่องแชทกระซิบ (Chat Spy)", "เห็นคนคุยซิบกัน", function() RunIY("chatspy") end)
+Spy:NewTextBox("ดูข้อมูลผู้เล่น", "ใส่ชื่อเพื่อดูข้อมูลไอดี", function(t) RunIY("whois " .. t) end)
+Spy:NewButton("ดูประวัติการฆ่า", "ดูว่าใครฆ่าใครในแมพ", function() RunIY("killlogs") end)
+Spy:NewButton("ดูรายการคนในห้อง", "ลิสต์รายชื่อผู้เล่นทั้งหมด", function() RunIY("playerlist") end)
+Spy:NewTextBox("ส่องของในตัวคนอื่น", "ใส่ชื่อเพื่อดูไอเทมในตัวเขา", function(t) RunIY("viewtools " .. t) end)
+Spy:NewButton("ตรวจเช็ค Remote", "สำหรับสายพัฒนาสคริปต์", function() RunIY("remotespy") end)
+
+-- ==========================================
+-- หมวดที่ 12: คำสั่งเบ็ดเตล็ด (Final Misc)
+-- ==========================================
+local Tab12 = Window:NewTab("คำสั่งสุดท้าย")
+local Final = Tab12:NewSection("เก็บตกคำสั่งที่เหลือ")
+
+Final:NewButton("ลบ UI ทั้งหมดบนจอ", "ทำให้หน้าจอสะอาด", function() RunIY("noui") end)
+Final:NewButton("ลบแสงสะท้อน (No Reflection)", "ลดแสงเงาที่พื้น", function() RunIY("noreflections") end)
+Final:NewButton("โหมดกลางคืนถาวร", "ล็อคเวลาไว้ที่กลางคืน", function() RunIY("loopnight") end)
+Final:NewButton("เปิดขอบเขตการเก็บของ", "เห็นรัศมีเก็บไอเทม", function() RunIY("reachrange") end)
+Final:NewTextBox("วาร์ปไปพิกัด (XYZ)", "ใส่เลขพิกัด X Y Z", function(t) RunIY("tppos " .. t) end)
+Final:NewButton("รีเซ็ตการตั้งค่าสคริปต์", "ล้างค่าที่เซ็ตไว้ใน IY", function() RunIY("clearsettings") end)
+Final:NewButton("ปิดเมนูนี้ (Close GUI)", "ปิดหน้าต่างสีดำนี้ลง", function() Library:Destroy() end)
+
+-- บรรทัดสุดท้ายปิดท้ายสคริปต์
+print("โหลดสคริปต์เมนูไทย 100+ คำสั่งสำเร็จ! ขอให้สนุกกับการเล่นครับ")
+
+-- ==========================================
+-- หมวดพิเศษ: ระบบบันทึกและวาร์ปพิกัด
+-- ==========================================
+local TabTP = Window:NewTab("วาร์ปพิกัด")
+local TPSection = TabTP:NewSection("ตั้งค่าจุดวาร์ป")
+
+local SavedPos = "" -- ตัวแปรเก็บพิกัดที่บันทึกไว้
+local LoopTP = false -- ตัวแปรสถานะ Loop
+
+TPSection:NewButton("Set (บันทึกจุดที่ยืนอยู่)", "บันทึกพิกัดปัจจุบันของคุณ", function()
+    local p = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+    SavedPos = string.format("%d, %d, %d", p.X, p.Y, p.Z)
+    print("บันทึกพิกัดแล้ว: " .. SavedPos)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "บันทึกสำเร็จ!";
+        Text = "พิกัด: " .. SavedPos;
+        Duration = 3;
+    })
+end)
+
+TPSection:NewButton("Teleport (วาร์ปไปจุดที่เซ็ต)", "วาร์ปไปพิกัดที่บันทึกไว้ 1 ครั้ง", function()
+    if SavedPos ~= "" then
+        RunIY("tppos " .. SavedPos)
+    else
+        warn("ยังไม่ได้บันทึกพิกัด!")
     end
 end)
 
-local warpLoop = false
-CreateButton("วาร์ปลูป (On/Off)", function()
-    warpLoop = not warpLoop
-    while warpLoop do
-        task.wait()
-        pcall(function()
-            for _, v in pairs(game.Players:GetPlayers()) do
-                if v.Name:lower():match(targetName:lower()) then
-                    lp.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
-                end
+TPSection:NewToggle("Loop Teleport (วาร์ปค้าง)", "วาร์ปไปจุดที่เซ็ตไว้รัวๆ (กันกระเด็น/ฟาร์ม)", function(state)
+    LoopTP = state
+    task.spawn(function()
+        while LoopTP do
+            if SavedPos ~= "" then
+                RunIY("tppos " .. SavedPos)
             end
-        end)
-    end
-end)
-
--- === [ 6. ESP สายรุ้ง & ตัวละครสายรุ้ง ] ===
-CreateTitle("🌈 Visuals")
-local espRainbow = false
-CreateButton("เปิด/ปิด ESP & ตัวสายรุ้ง", function()
-    espRainbow = not espRainbow
-    if espRainbow then
-        spawn(function()
-            while espRainbow do
-                local color = Color3.fromHSV(tick()%5/5, 1, 1)
-                for _, v in pairs(lp.Character:GetChildren()) do
-                    if v:IsA("BasePart") then v.Color = color end
-                end
-                task.wait()
-            end
-        end)
-    end
-end)
-
--- === [ 7. เคลื่อนที่ & Jump Dash ] ===
-CreateTitle("⚡ Movement")
-CreateButton("พุ่งตอนกระโดด (Dash Jump)", function()
-    lp.Character.Humanoid.Jumping:Connect(function()
-        local bv = Instance.new("BodyVelocity", lp.Character.HumanoidRootPart)
-        bv.MaxForce = Vector3.new(1e5, 0, 1e5)
-        bv.Velocity = lp.Character.HumanoidRootPart.CFrame.LookVector * 100
-        task.wait(0.2)
-        bv:Destroy()
+            task.wait(0.1) -- ความถี่ในการวาร์ป (ปรับได้)
+        end
     end)
 end)
 
--- === [ 8. ปรับจูนสถานะ (FOV, Speed, Jump) ] ===
-CreateTitle("⚙️ Config (Min 1,000 Mode)")
-CreateTextBox("ความเร็ว (WalkSpeed)", function(v) lp.Character.Humanoid.WalkSpeed = tonumber(v) end)
-CreateTextBox("แรงกระโดด (JumpPower)", function(v) lp.Character.Humanoid.JumpPower = tonumber(v) end)
-CreateTextBox("ระยะมุมมอง (FOV)", function(v) workspace.CurrentCamera.FieldOfView = tonumber(v) end)
-CreateButton("เซ็ตทุกอย่างเป็น 1,000", function()
-    lp.Character.Humanoid.WalkSpeed = 1000
-    lp.Character.Humanoid.JumpPower = 1000
-    workspace.CurrentCamera.FieldOfView = 120
+TPSection:NewTextBox("วาร์ปไปพิกัดที่ระบุเอง", "ใส่เลข X, Y, Z (มีลูกน้ำคั่น)", function(txt)
+    SavedPos = txt
+    RunIY("tppos " .. txt)
 end)
-
--- === [ 9. F3X & หมุนตัว ] ===
-CreateTitle("🛠️ อื่นๆ")
-CreateButton("รัน F3X Tools", function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))() -- รัน IY เพื่อใช้คำสั่ง f3x หรือเรียกตรง
-    -- หมายเหตุ: การเรียก F3X โดยตรงต้องใช้ลิ้งค์เฉพาะของตัวเกมนั้นๆ
-end)
-
-local spinSpeed = 0
-CreateTextBox("ความเร็วการหมุนตัว (Spin)", function(v) spinSpeed = tonumber(v) end)
-RunService.RenderStepped:Connect(function()
-    if spinSpeed > 0 then
-        lp.Character.HumanoidRootPart.CFrame = lp.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(spinSpeed), 0)
-    end
-end)
-
--- === [ 10. ระบบ Copy ตัวละคร ] ===
-CreateTitle("👤 Identity")
-CreateTextBox("ชื่อคนที่จะก๊อปชุด", function(n)
-    for _, v in pairs(game.Players:GetPlayers()) do
-        if v.Name:lower():match(n:lower()) then
-            lp.CharacterAppearanceId = v.UserId
-            lp:LoadCharacter()
-        end
-    end
-end)
-
--- === [ 11. ปุ่มบวก (+) แยกหน้าต่าง ] ===
-local AddButton = Instance.new("TextButton", ScreenGui)
-AddButton.Size = UDim2.new(0, 40, 0, 40)
-AddButton.Position = UDim2.new(0, 10, 0.4, 70)
-AddButton.Text = "+"
-AddButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-Instance.new("UICorner", AddButton)
-
-AddButton.MouseButton1Click:Connect(function()
-    local SubFrame = MainFrame:Clone()
-    SubFrame.Parent = ScreenGui
-    SubFrame.Position = UDim2.new(0.8, 0, 0.5, 0)
-    SubFrame.Visible = true
-    SubFrame.Size = UDim2.new(0, 200, 0, 300)
-    CreateButton("ปิดหน้านี้", function() SubFrame:Destroy() end, SubFrame)
-end)
-
--- สลับเปิด/ปิดเมนู
-OpenIcon.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
-
-print("Gracie Hub Ultimate Loaded!")
