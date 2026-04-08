@@ -1,0 +1,43 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local rootPart = character:WaitForChild("HumanoidRootPart")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- อ้างอิงตำแหน่ง (แก้ชื่อใน "" ให้ตรงกับที่คุณตั้งใน Explorer)
+local screenGui = script.Parent
+local mainFrame = screenGui:WaitForChild("MainFrame") 
+local openBtn = screenGui:WaitForChild("OpenButton")
+local tpBtn = mainFrame:WaitForChild("TeleportBtn")
+local spiderBtn = mainFrame:WaitForChild("SpiderBtn")
+
+-- 1. ระบบ เปิด/ปิด UI
+openBtn.MouseButton1Click:Connect(function()
+	mainFrame.Visible = not mainFrame.Visible
+	print("Menu Toggled!") -- เช็คใน Output ว่าทำงานไหม
+end)
+
+-- 2. ระบบ Teleport ไปข้างหน้า
+tpBtn.MouseButton1Click:Connect(function()
+	rootPart.CFrame = rootPart.CFrame * CFrame.new(0, 0, -5)
+end)
+
+-- 3. ระบบ Spider Mode
+local spiderActive = false
+spiderBtn.MouseButton1Click:Connect(function()
+	spiderActive = not spiderActive
+	spiderBtn.BackgroundColor3 = spiderActive and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+end)
+
+RunService.Heartbeat:Connect(function()
+	if spiderActive then
+		local raycastParams = RaycastParams.new()
+		raycastParams.FilterDescendantsInstances = {character}
+		local raycastResult = workspace:Raycast(rootPart.Position, rootPart.CFrame.LookVector * 2.5, raycastParams)
+
+		if raycastResult then
+			rootPart.Velocity = Vector3.new(rootPart.Velocity.X, 50, rootPart.Velocity.Z)
+		end
+	end
+end)
+
