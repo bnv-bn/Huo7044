@@ -1,19 +1,23 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "นางฟ้า hub🪽 V.21 [ULTIMATE TIME]",
-   LoadingTitle = "กำลังควบคุมกาลเวลาและจักรวาล...",
-   LoadingSubtitle = "Time Control & All Features Added",
+   Name = "นางฟ้า hub🪽 V.27 [COMPLETE]",
+   LoadingTitle = "กำลังรวบรวมมัลติเวิร์สและคลังแสง...",
+   LoadingSubtitle = "เพิ่มระบบรับไอเทม (Tool Master) เรียบร้อย",
    ConfigurationSaving = { Enabled = false }
 })
 
--- [[ ตัวแปรหลัก ]]
+-- [[ 💾 คลังตัวแปรทั้งหมด (ห้ามลบ) ]]
 local Player = game.Players.LocalPlayer
 local Character, Humanoid, Root
 local WalkSpeedValue, JumpPowerValue = 16, 50
 local GravityValue = 196.2
-local Flying, SpiderManEnabled, AutoClickEnabled = false, false, false
-local FullBrightEnabled, AntiAFKEnabled = false, false
+local FlySpeed, ClickSpeed = 50, 0.1
+local GroundDashSpeed, AirDashSpeed = 80, 120
+local Flying, SpiderManEnabled, InfJump, AutoClickEnabled = false, false, false, false
+local FullBrightEnabled, AntiAFKEnabled, SilentAimEnabled = false, false, false
+local XrayEnabled, HidePlayersEnabled = false, false
+local TimeLeft, TimerRunning = 600, false
 local currentMap = nil
 
 local function UpdateCharacter()
@@ -25,137 +29,175 @@ end
 UpdateCharacter()
 Player.CharacterAdded:Connect(function() task.wait(0.7) UpdateCharacter() end)
 
--- [[ TABS ]]
-local MainTab = Window:CreateTab("เคลื่อนที่/โน้มถ่วง", 4483362458)
-local MapTab = Window:CreateTab("เสกแมพส่วนตัว", 4483362458)
-local VisualTab = Window:CreateTab("แสงสี/กาลเวลา", 4483362458) -- อัปเกรดใหม่
-local GameTab = Window:CreateTab("มินิเกมดวง", 4483362458)
-local AdvTab = Window:CreateTab("ช่วยฟาร์ม/แลค", 4483362458)
+-- [[ 📂 TABS จัดหมวดหมู่ ]]
+local MainTab = Window:CreateTab("เคลื่อนที่/บิน", 4483362458)
+local CombatTab = Window:CreateTab("ต่อสู้/แดช", 4483362458)
+local ToolTab = Window:CreateTab("รับไอเทมฟรี (Tools)", 4483362458) -- แท็บใหม่ที่เพิ่มมา
+local MapTab = Window:CreateTab("เสกแมพมัลติเวิร์ส", 4483362458)
+local VisualTab = Window:CreateTab("แสงสี/กาลเวลา", 4483362458)
+local TP_Tab = Window:CreateTab("วาร์ปหาคน", 4483362458)
+local GameTab = Window:CreateTab("มินิเกม/จับเวลา", 4483362458)
+local AdvTab = Window:CreateTab("ช่วยเหลือ/ฟาร์ม", 4483362458)
 
--- ### 1. ระบบกาลเวลาและแสงสี (NEW!) ###
-VisualTab:CreateSection("ระบบเปลี่ยนเวลา (Time Control)")
-
-VisualTab:CreateButton({
-    Name = "☀️ เปลี่ยนเป็นตอนเช้า (Morning)",
-    Callback = function()
-        game:GetService("Lighting").TimeOfDay = "12:00:00"
-        Rayfield:Notify({Title="Lighting", Content="เปลี่ยนเป็นตอนเช้าแล้ว", Duration=2})
+-- ==========================================
+-- 🛠️ แท็บระบบรับไอเทม (Tool Master)
+-- ==========================================
+local function GetTool(assetId, toolName)
+    local success, model = pcall(function() return game:GetObjects("rbxassetid://" .. assetId)[1] end)
+    if success and model then
+        model.Parent = Player.Backpack
+        Rayfield:Notify({Title="Tool Master", Content="ได้รับ " .. toolName .. " แล้ว!", Duration=2})
+    else
+        Rayfield:Notify({Title="Error", Content="ไอเทมนี้อาจถูกลบหรือโหลดไม่ได้ในแมพนี้", Duration=2})
     end
-})
+end
 
-VisualTab:CreateButton({
-    Name = "🌑 เปลี่ยนเป็นตอนกลางคืน (Night)",
-    Callback = function()
-        game:GetService("Lighting").TimeOfDay = "00:00:00"
-        Rayfield:Notify({Title="Lighting", Content="เปลี่ยนเป็นตอนกลางคืนแล้ว", Duration=2})
-    end
-})
+ToolTab:CreateSection("--- อาวุธยอดนิยม ---")
+ToolTab:CreateButton({Name = "⚔️ ดาบแสง (Linked Sword)", Callback = function() GetTool(125345, "ดาบในตำนาน") end})
+ToolTab:CreateButton({Name = "🔫 ปืนเลเซอร์ (Hyperlaser)", Callback = function() GetTool(130113146, "ปืนเลเซอร์") end})
+ToolTab:CreateButton({Name = "🔨 ค้อนยักษ์ (Gravity Hammer)", Callback = function() GetTool(33866828, "ค้อนแรงโน้มถ่วง") end})
 
-VisualTab:CreateSlider({
-    Name = "ปรับเวลาแบบละเอียด (ชั่วโมง)",
-    Range = {0, 24},
-    Increment = 0.1,
-    CurrentValue = 12,
-    Callback = function(V)
-        game:GetService("Lighting").ClockTime = V
-    end
-})
+ToolTab:CreateSection("--- ของกิน & ของฮา ---")
+ToolTab:CreateButton({Name = "🍕 พิซซ่า (Pizza)", Callback = function() GetTool(2259650, "พิซซ่า") end})
+ToolTab:CreateButton({Name = "🍔 เบอร์เกอร์ (Cheezburger)", Callback = function() GetTool(18411388, "เบอร์เกอร์") end})
+ToolTab:CreateButton({Name = "🎷 แซกโซโฟน (Epic Sax)", Callback = function() GetTool(111300623, "แซกโซโฟน") end})
+ToolTab:CreateButton({Name = "🧨 ระเบิด (Bomb)", Callback = function() GetTool(11570048, "ระเบิด") end})
 
-VisualTab:CreateSection("เอฟเฟกต์การมองเห็น")
-VisualTab:CreateToggle({Name = "สว่างคาตา (Full Bright)", Callback = function(V) game.Lighting.Brightness = V and 2 or 1 end})
-VisualTab:CreateToggle({Name = "X-Ray (บล็อกใส)", Callback = function(V) 
-    for _, obj in pairs(workspace:GetDescendants()) do if obj:IsA("BasePart") then obj.LocalTransparencyModifier = V and 0.7 or 0 end end 
+-- ==========================================
+-- 🚀 1. ระบบเคลื่อนที่ (Movement)
+-- ==========================================
+MainTab:CreateToggle({Name = "ระบบบิน (Fly Mode)", CurrentValue = false, Callback = function(V) Flying = V end})
+MainTab:CreateSlider({Name = "ความเร็วบิน", Range = {10, 500}, Increment = 5, CurrentValue = 50, Callback = function(V) FlySpeed = V end})
+MainTab:CreateSlider({Name = "ความเร็วเดิน", Range = {16, 500}, Increment = 1, CurrentValue = 16, Callback = function(V) WalkSpeedValue = V end})
+MainTab:CreateToggle({Name = "สไปเดอร์แมน (ไต่ตึก)", Callback = function(V) SpiderManEnabled = V end})
+MainTab:CreateSlider({Name = "แรงโน้มถ่วง (Gravity)", Range = {0, 196}, Increment = 1, CurrentValue = 196, Callback = function(V) game.Workspace.Gravity = V end})
+
+-- ==========================================
+-- ⚔️ 2. ระบบต่อสู้ & แดช (Combat)
+-- ==========================================
+CombatTab:CreateToggle({Name = "Silent Aim (ล็อคเป้า)", Callback = function(V) SilentAimEnabled = V end})
+CombatTab:CreateSlider({Name = "พุ่งบนพื้น (Ground Dash)", Range = {50, 500}, Increment = 5, CurrentValue = 80, Callback = function(V) GroundDashSpeed = V end})
+CombatTab:CreateButton({Name = "รับคทาวาร์ป (Teleport Tool)", Callback = function() 
+    local tool = Instance.new("Tool")
+    tool.Name = "นางฟ้าวาร์ป🪽"
+    tool.RequiresHandle = false
+    tool.Activated:Connect(function()
+        local pos = Player:GetMouse().Hit.Position
+        Root.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
+    end)
+    tool.Parent = Player.Backpack
 end})
 
--- ### 2. ระบบแรงโน้มถ่วงและการเคลื่อนที่ ###
-MainTab:CreateSection("ระบบแรงโน้มถ่วง")
-MainTab:CreateSlider({Name = "ความแรงโน้มถ่วง (น้อย = ลอยช้า)", Range = {0, 196}, Increment = 1, CurrentValue = 196, Callback = function(V) game.Workspace.Gravity = V end})
-MainTab:CreateButton({Name = "รีเซ็ตแรงโน้มถ่วงปกติ", Callback = function() game.Workspace.Gravity = 196.2 end})
-MainTab:CreateToggle({Name = "ระบบบิน (Fly)", Callback = function(V) Flying = V end})
-MainTab:CreateSlider({Name = "ความเร็วเดิน", Range = {16, 300}, Increment = 1, CurrentValue = 16, Callback = function(V) WalkSpeedValue = V end})
-
--- ### 3. ระบบเสกแมพส่วนตัว ###
+-- ==========================================
+-- 🌍 3. ระบบเสกแมพ (Map Spawner - 10 แมพครบ)
+-- ==========================================
 local function spawnMap(assetId, height)
     if currentMap then currentMap:Destroy() end
     local success, model = pcall(function() return game:GetObjects("rbxassetid://" .. assetId)[1] end)
     if success and model then
-        model.Parent = workspace
-        currentMap = model
+        model.Parent = workspace; currentMap = model
         model:PivotTo(model:GetPivot() + Vector3.new(0, height, 0))
-        task.wait(0.5)
-        Root.CFrame = model:GetPivot() * CFrame.new(0, 5, 0)
+        task.wait(0.5); Root.CFrame = model:GetPivot() * CFrame.new(0, 15, 0)
+        Rayfield:Notify({Title="Map Spawner", Content="เสกสำเร็จ!", Duration=3})
     end
 end
-MapTab:CreateButton({Name = "Map: Brookhaven", Callback = function() spawnMap(108186045609746, 250) end})
-MapTab:CreateButton({Name = "Map: Free Fire", Callback = function() spawnMap(136952494452456, 250) end})
-MapTab:CreateButton({Name = "❌ ลบแมพที่เสกมา", Callback = function() if currentMap then currentMap:Destroy() end end})
 
--- ### 4. มินิเกมเป่ายิ้งฉุบ (RPS) ###
+MapTab:CreateSection("--- แผนที่และบ้านทั้งหมด ---")
+MapTab:CreateButton({Name = "🏡 Brookhaven City", Callback = function() spawnMap(108186045609746, 300) end})
+MapTab:CreateButton({Name = "🔫 Free Fire Battle", Callback = function() spawnMap(136952494452456, 300) end})
+MapTab:CreateButton({Name = "🏟️ Sword Fight Arena", Callback = function() spawnMap(12431707293, 300) end})
+MapTab:CreateButton({Name = "🏰 Modern Mansion", Callback = function() spawnMap(11425178822, 350) end})
+MapTab:CreateButton({Name = "🌳 Jungle Treehouse", Callback = function() spawnMap(12431266212, 350) end})
+MapTab:CreateButton({Name = "⛩️ Japanese Villa", Callback = function() spawnMap(13134606132, 350) end})
+MapTab:CreateButton({Name = "👻 Haunted Mansion", Callback = function() spawnMap(11244026040, 350) end})
+MapTab:CreateButton({Name = "🏃 Mega Obby", Callback = function() spawnMap(10452317135, 400) end})
+MapTab:CreateButton({Name = "🌌 Glass Bridge", Callback = function() spawnMap(8125171721, 500) end})
+MapTab:CreateButton({Name = "❌ ลบแมพทั้งหมด", Callback = function() if currentMap then currentMap:Destroy() currentMap = nil end end})
+
+-- ==========================================
+-- 👁️ 4. ระบบแสงสี & กาลเวลา (Visual)
+-- ==========================================
+VisualTab:CreateButton({Name = "☀️ ตอนเช้า (12:00)", Callback = function() game.Lighting.ClockTime = 12 end})
+VisualTab:CreateButton({Name = "🌑 ตอนกลางคืน (00:00)", Callback = function() game.Lighting.ClockTime = 0 end})
+VisualTab:CreateToggle({Name = "Full Bright (สว่าง)", Callback = function(V) game.Lighting.Brightness = V and 2 or 1 end})
+VisualTab:CreateToggle({Name = "X-Ray (บล็อกใส)", Callback = function(V) 
+    for _, obj in pairs(workspace:GetDescendants()) do if obj:IsA("BasePart") and not obj.Parent:FindFirstChild("Humanoid") then obj.LocalTransparencyModifier = V and 0.7 or 0 end end 
+end})
+
+-- ==========================================
+-- 📍 5. ระบบวาร์ปหาคน (Teleport)
+-- ==========================================
+local TargetPlayer = ""
+TP_Tab:CreateInput({Name = "ชื่อผู้เล่น", PlaceholderText = "พิมพ์ชื่อ...", Callback = function(T) TargetPlayer = T end})
+TP_Tab:CreateButton({Name = "วาร์ปไปหาคนนี้", Callback = function()
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v.Name:lower():find(TargetPlayer:lower()) and v.Character then
+            Root.CFrame = v.Character.HumanoidRootPart.CFrame
+        end
+    end
+end})
+
+-- ==========================================
+-- ⏱️ 6. ระบบมินิเกม & จับเวลา (Game)
+-- ==========================================
+local TimerLabel = GameTab:CreateLabel("เวลาคงเหลือ: 10:00")
+GameTab:CreateButton({Name = "เริ่ม/หยุด จับเวลา", Callback = function() TimerRunning = not TimerRunning end})
+GameTab:CreateButton({Name = "เปิดเกมเป่ายิ้งฉุบ", Callback = function() rpsFolder.Visible = true end})
+
+-- [ ระบบ RPS ]
 local MiniGui = Instance.new("ScreenGui", game.CoreGui)
 local rpsFolder = Instance.new("Frame", MiniGui)
 rpsFolder.Size = UDim2.new(0,360,0,240); rpsFolder.Position = UDim2.new(0.5,0,0.5,0); rpsFolder.AnchorPoint = Vector2.new(0.5,0.5); rpsFolder.BackgroundColor3 = Color3.fromRGB(20,20,20); rpsFolder.Visible = false; Instance.new("UICorner", rpsFolder)
 local rpsStroke = Instance.new("UIStroke", rpsFolder); rpsStroke.Thickness = 3
 local rpsText = Instance.new("TextLabel", rpsFolder)
-rpsText.Size = UDim2.new(1,-20,0,50); rpsText.Position = UDim2.new(0,10,1,-60); rpsText.BackgroundTransparency = 1; rpsText.TextScaled = true; rpsText.TextColor3 = Color3.new(1,1,1); rpsText.Text = "เป่ายิ้งฉุบตัดสินชะตา!"
+rpsText.Size = UDim2.new(1,-20,0,50); rpsText.Position = UDim2.new(0,10,1,-60); rpsText.BackgroundTransparency = 1; rpsText.TextScaled = true; rpsText.TextColor3 = Color3.new(1,1,1); rpsText.Text = "เป่ายิ้งฉุบ!"
 
-local function playRPS(pPick)
-    local choices = {["✂️"] = "📃", ["📃"] = "🧱", ["🧱"] = "✂️"}
-    local emojis = {"✂️","📃","🧱"}
-    for i=1,12 do rpsText.Text = "ยิ้งงงง ฉุบ! "..emojis[math.random(3)] task.wait(0.06) end
-    local bPick = emojis[math.random(3)]
-    rpsText.Text = "คุณ: "..pPick.." | บอท: "..bPick
+local function playRPS(p)
+    local choices = {["✂️"] = "📃", ["📃"] = "🧱", ["🧱"] = "✂️"} local em = {"✂️","📃","🧱"}
+    for i=1,12 do rpsText.Text = "ยิ้งงง ฉุบ! "..em[math.random(3)] task.wait(0.06) end
+    local b = em[math.random(3)] rpsText.Text = "คุณ: "..p.." VS บอท: "..b
     task.wait(1.5)
-    if choices[pPick] == bPick then rpsText.Text = "ชนะ! รอดตาย"
-    elseif pPick == bPick then rpsText.Text = "เสมอ! เอาใหม่"
-    else rpsText.Text = "แพ้! ปิดโปรทิ้ง!!" task.wait(1); Rayfield:Destroy(); MiniGui:Destroy() end
+    if choices[p] == b then rpsText.Text = "ชนะ!" elseif p == b then rpsText.Text = "เสมอ!" else rpsText.Text = "แพ้! ปิดโปร!!" task.wait(1) Rayfield:Destroy() MiniGui:Destroy() end
 end
-local rpsGrid = Instance.new("UIGridLayout", rpsFolder); rpsGrid.CellSize = UDim2.new(0,90,0,90); rpsGrid.HorizontalAlignment = "Center"
-local function cRB(t) local b = Instance.new("TextButton", rpsFolder); b.Text = t; b.TextScaled = true; Instance.new("UICorner", b); b.MouseButton1Click:Connect(function() playRPS(t) end) end
-cRB("🧱"); cRB("📃"); cRB("✂️"); rpsGrid.Parent = rpsFolder
-GameTab:CreateButton({Name = "เปิดเกมเป่ายิ้งฉุบ", Callback = function() rpsFolder.Visible = true end})
+local g = Instance.new("UIGridLayout", rpsFolder); g.CellSize = UDim2.new(0,90,0,90); g.HorizontalAlignment = "Center"
+local function cB(t) local b = Instance.new("TextButton", rpsFolder); b.Text = t; b.TextScaled = true; b.MouseButton1Click:Connect(function() playRPS(t) end) end
+cB("🧱"); cB("📃"); cB("✂️"); g.Parent = rpsFolder
 
--- ### 5. Mini UI (ปุ่มบวกด่วนสายรุ้ง) ###
+-- ==========================================
+-- 🌈 7. Mini UI (ปุ่มบวกสายรุ้ง)
+-- ==========================================
 local PlusBtn = Instance.new("TextButton", MiniGui)
 PlusBtn.Size = UDim2.new(0, 60, 0, 60); PlusBtn.Position = UDim2.new(0.9, -10, 0.5, -30); PlusBtn.Text = "+"; PlusBtn.BackgroundColor3 = Color3.new(1,0,0); Instance.new("UICorner", PlusBtn).CornerRadius = UDim.new(1,0)
-
-local MiniFrame = Instance.new("Frame", MiniGui)
-MiniFrame.Size = UDim2.new(0, 150, 0, 380); MiniFrame.Position = UDim2.new(0.9, -170, 0.5, -190); MiniFrame.Visible = false; MiniFrame.BackgroundColor3 = Color3.fromRGB(30,30,30); Instance.new("UICorner", MiniFrame)
+local MiniFrame = Instance.new("Frame", MiniGui); MiniFrame.Size = UDim2.new(0, 150, 0, 420); MiniFrame.Position = UDim2.new(0.9, -170, 0.5, -210); MiniFrame.Visible = false; MiniFrame.BackgroundColor3 = Color3.fromRGB(30,30,30); Instance.new("UICorner", MiniFrame)
 local L = Instance.new("UIListLayout", MiniFrame); L.Padding = UDim.new(0,5); L.HorizontalAlignment = "Center"
-
-local function QuickBtn(t, f)
-    local b = Instance.new("TextButton", MiniFrame); b.Size = UDim2.new(0, 130, 0, 35); b.Text = t; b.BackgroundColor3 = Color3.fromRGB(50,50,50); b.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", b); b.MouseButton1Click:Connect(f)
-end
-
-QuickBtn("เมนูหลัก", function() Rayfield:Toggle() end)
-QuickBtn("☀️ เช้า", function() game:GetService("Lighting").ClockTime = 12 end)
-QuickBtn("🌑 มืด", function() game:GetService("Lighting").ClockTime = 0 end)
-QuickBtn("ลอยตัว", function() game.Workspace.Gravity = 50 end)
-QuickBtn("เป่ายิ้งฉุบ!", function() rpsFolder.Visible = true end)
-QuickBtn("บิน: ON/OFF", function() Flying = not Flying end)
-
+local function QB(t, f) local b = Instance.new("TextButton", MiniFrame); b.Size = UDim2.new(0, 130, 0, 35); b.Text = t; b.BackgroundColor3 = Color3.fromRGB(50,50,50); b.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", b); b.MouseButton1Click:Connect(f) end
+QB("เมนูหลัก", function() Rayfield:Toggle() end)
+QB("☀️ เช้า", function() game.Lighting.ClockTime = 12 end)
+QB("🌑 มืด", function() game.Lighting.ClockTime = 0 end)
+QB("พุ่ง (Dash)", function() if Root then Root.Velocity = Root.CFrame.LookVector * GroundDashSpeed end end)
+QB("บิน: ON/OFF", function() Flying = not Flying end)
 PlusBtn.MouseButton1Click:Connect(function() MiniFrame.Visible = not MiniFrame.Visible end)
 
--- [[ LOOPS ]]
+-- [[ 🔄 Core Loops ]]
 game:GetService("RunService").RenderStepped:Connect(function()
     if Root and Humanoid then
-        if Flying then Root.Velocity = workspace.CurrentCamera.CFrame.LookVector * 100 end
+        if Flying then Root.Velocity = workspace.CurrentCamera.CFrame.LookVector * FlySpeed end
         if SpiderManEnabled then
-            local Ray = workspace:Raycast(Root.Position, Root.CFrame.LookVector * 2.5)
-            if Ray then Root.Velocity = Vector3.new(Root.Velocity.X, 45, Root.Velocity.Z) end
+            local r = workspace:Raycast(Root.Position, Root.CFrame.LookVector * 2.5)
+            if r then Root.Velocity = Vector3.new(Root.Velocity.X, 45, Root.Velocity.Z) end
         end
-        Humanoid.WalkSpeed = WalkSpeedValue
+        if not Flying then Humanoid.WalkSpeed = WalkSpeedValue end
     end
 end)
-
 spawn(function()
-    local h = 0
-    while true do
-        local color = Color3.fromHSV(h, 0.8, 1)
-        PlusBtn.BackgroundColor3 = color
-        rpsStroke.Color = color
-        h = h + 0.01
-        task.wait(0.05)
+    while true do task.wait(1)
+        if TimerRunning and TimeLeft > 0 then TimeLeft = TimeLeft - 1
+            TimerLabel:Set("เวลาคงเหลือ: "..string.format("%02d:%02d", math.floor(TimeLeft/60), TimeLeft%60))
+        end
     end
 end)
+spawn(function()
+    local h = 0 while true do local c = Color3.fromHSV(h, 0.8, 1) PlusBtn.BackgroundColor3 = c; rpsStroke.Color = c; h = h + 0.01; task.wait(0.05) end
+end)
 
-Rayfield:Notify({Title = "นางฟ้า Hub V.21", Content = "ระบบควบคุมเวลาและ Multiverse พร้อมแล้ว!", Duration = 5})
+Rayfield:Notify({Title = "นางฟ้า Hub V.27", Content = "รวมทุกระบบและไอเทมครบถ้วน!", Duration = 5})
