@@ -1,141 +1,160 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "นางฟ้า hub🪽",
-   LoadingTitle = "System Loading...",
-   LoadingSubtitle = "Save Location & All Features Ready",
+   Name = "นางฟ้า hub🪽 V.4 [MOBILE]",
+   LoadingTitle = "ระบบกำลังโหลด...",
+   LoadingSubtitle = "เพิ่มระบบล็อคเป้าฆาตกรแล้ว",
    ConfigurationSaving = { Enabled = false }
 })
 
+-- [ ตัวแปรหลัก ]
 local Player = game.Players.LocalPlayer
 local Character, Humanoid, Root
-local DashSpeed, SpinSpeed, HitboxSize, FlySpeed = 50, 50, 2, 50
-local TP_Distance = 15
-local SavedPosition = nil -- ตัวแปรเก็บพิกัด
-local LoopTP = false -- ตัวแปรคุมลูปวาร์ป
-local AutoDash, InfJump, SpinEnabled, WallHopEnabled, ESPEnabled, NoclipEnabled, Flying, Swimming = false, false, false, false, false, false, false, false
+local WalkSpeedValue, JumpPowerValue = 16, 50
+local DashSpeed = 80
+local HitboxSize = 2
+local SpinEnabled, AutoJump, InfJump, NoclipEnabled, Invisibility = false, false, false, false, false
+local ESPEnabled, SilentAimEnabled = false, false
 
 local function UpdateCharacter()
     Character = Player.Character or Player.CharacterAdded:Wait()
     Humanoid = Character:WaitForChild("Humanoid")
     Root = Character:WaitForChild("HumanoidRootPart")
+    Humanoid.UseJumpPower = true 
 end
 UpdateCharacter()
-Player.CharacterAdded:Connect(function() task.wait(0.5) UpdateCharacter() end)
+Player.CharacterAdded:Connect(function() task.wait(0.7) UpdateCharacter() end)
 
--- [TABS]
-local MainTab = Window:CreateTab("Movement", 4483362458)
-local SpecialTab = Window:CreateTab("Special Features", 4483362458)
-local CombatTab = Window:CreateTab("Combat/Hitbox", 4483362458)
-local ESPTab = Window:CreateTab("Visuals (ESP)", 4483362458)
-
--- ### 1. ระบบ Set Location & Teleport (NEW!) ###
-SpecialTab:CreateSection("Location System (Save POS)")
-
-SpecialTab:CreateButton({
-   Name = "บันทึกจุดปัจจุบัน (Save Current POS)",
-   Callback = function()
-      if Root then
-          SavedPosition = Root.CFrame
-          Rayfield:Notify({Title = "Location Saved", Content = "บันทึกพิกัดเรียบร้อยแล้ว!", Duration = 2})
-      end
-   end,
-})
-
-SpecialTab:CreateButton({
-   Name = "วาร์ปไปจุดที่บันทึก (TP to Saved POS)",
-   Callback = function()
-      if SavedPosition and Root then
-          Root.CFrame = SavedPosition
-      else
-          Rayfield:Notify({Title = "Error", Content = "คุณยังไม่ได้บันทึกพิกัด!", Duration = 2})
-      end
-   end,
-})
-
-SpecialTab:CreateToggle({
-   Name = "วาร์ปกลับจุดบันทึกวนลูป (Loop TP)",
-   CurrentValue = false,
-   Callback = function(Value)
-      LoopTP = Value
-      if Value and not SavedPosition then
-          Rayfield:Notify({Title = "Warning", Content = "ระวัง: คุณยังไม่ได้บันทึกพิกัด ลูปอาจไม่ทำงาน", Duration = 3})
-      end
-   end,
-})
-
--- ลูปการทำงานของ Loop TP
-spawn(function()
-    while true do
-        task.wait(1) -- วาร์ปกลับทุกๆ 1 วินาที
-        if LoopTP and SavedPosition and Root then
-            Root.CFrame = SavedPosition
-        end
-    end
-end)
-
--- ### 2. ระบบปุ่มลอยเทเลพอร์ตไปข้างหน้า (จาก V16) ###
-SpecialTab:CreateSection("Quick TP Button")
-local function createTPForwardButton()
-    if game.CoreGui:FindFirstChild("TPForwardGui") then return end
-    local Gui = Instance.new("ScreenGui", game.CoreGui)
-    Gui.Name = "TPForwardGui"
-    Gui.ResetOnSpawn = false
-    local Btn = Instance.new("TextButton", Gui)
-    Btn.Size = UDim2.new(0, 100, 0, 45)
-    Btn.Position = UDim2.new(0.85, 0, 0.5, 0)
-    Btn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    Btn.Text = "TP FORWARD"
-    Btn.TextColor3 = Color3.new(1, 1, 1)
-    Instance.new("UICorner", Btn)
-    Btn.MouseButton1Click:Connect(function() if Root then Root.CFrame = Root.CFrame * CFrame.new(0, 0, -TP_Distance) end end)
-end
-SpecialTab:CreateButton({Name = "เรียกปุ่มลอย (TP Forward)", Callback = function() createTPForwardButton() end})
-
--- ### 3. ระบบบิน & ว่ายน้ำ & Noclip ###
-MainTab:CreateSection("Pro Movement")
-MainTab:CreateToggle({Name = "ระบบบิน (Fly)", CurrentValue = false, Callback = function(V) Flying = V end})
-MainTab:CreateToggle({Name = "ว่ายน้ำบนบก (Swim)", CurrentValue = false, Callback = function(V) Swimming = V end})
-MainTab:CreateToggle({Name = "ทะลุบล็อก (Noclip)", CurrentValue = false, Callback = function(V) NoclipEnabled = V end})
-
--- ### 4. ระบบ Hitbox & ESP ###
-CombatTab:CreateSlider({Name = "ขนาด Hitbox", Range = {2, 50}, Increment = 1, CurrentValue = 2, Callback = function(V) HitboxSize = V end})
-local function ApplyESP(v)
-    local Highlight = Instance.new("Highlight", game.CoreGui)
-    Highlight.Adornee = v.Character
-    spawn(function()
-        while Highlight.Parent do
-            Highlight.Enabled = ESPEnabled
-            if v.Character then
-                local IsM = v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")
-                local IsS = v.Backpack:FindFirstChild("Gun") or v.Character:FindFirstChild("Gun")
-                if IsM then Highlight.FillColor = Color3.new(1,0,0) elseif IsS then Highlight.FillColor = Color3.new(0,0,1) else Highlight.FillColor = Color3.new(1,1,1) end
+-- ฟังก์ชันหาฆาตกร (สำหรับ MM2)
+local function GetMurderer()
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= Player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then
+                return v.Character.HumanoidRootPart
             end
-            task.wait(1)
         end
-    end)
+    end
+    return nil
 end
-ESPTab:CreateToggle({Name = "เปิด ESP (ทุกแมพ)", CurrentValue = false, Callback = function(V) ESPEnabled = V if V then for _, p in pairs(game.Players:GetPlayers()) do if p ~= Player then ApplyESP(p) end end end end})
 
--- [ ระบบอื่นๆ เช่น Spin, Dash, InfJump ยังทำงานอยู่เบื้องหลังตามโค้ดเดิม ]
-game:GetService("RunService").RenderStepped:Connect(function()
-    if Flying and Root then
-        -- (โค้ดบินเดิม...)
-    end
-    if Swimming and Humanoid then Humanoid:ChangeState(Enum.HumanoidStateType.Swimming) end
-    if NoclipEnabled and Character then
-        for _, part in pairs(Character:GetDescendants()) do if part:IsA("BasePart") then part.CanCollide = false end end
-    end
-end)
+-- [ TABS ]
+local MainTab = Window:CreateTab("เดิน/โดด", 4483362458)
+local CombatTab = Window:CreateTab("ระบบต่อสู้", 4483362458)
+local VisualTab = Window:CreateTab("มองทะลุ", 4483362458)
+local TP_Tab = Window:CreateTab("วาร์ป/ไอเทม", 4483362458)
 
--- ปุ่มบวกสายรุ้ง
-local MainGui = Instance.new("ScreenGui", game.CoreGui)
-MainGui.ResetOnSpawn = false
-local PlusBtn = Instance.new("TextButton", MainGui)
-PlusBtn.Size = UDim2.new(0, 50, 0, 50)
-PlusBtn.Position = UDim2.new(0.9, 0, 0.4, 0)
+-- ### 1. ระบบต่อสู้ & Silent Aim ###
+CombatTab:CreateSection("ระบบล็อคเป้า (MM2)")
+CombatTab:CreateToggle({
+    Name = "ล็อคเป้าฆาตกร (Silent Aim)",
+    CurrentValue = false,
+    Callback = function(V)
+        SilentAimEnabled = V
+    end
+})
+
+CombatTab:CreateSlider({Name = "ขยาย Hitbox ศัตรู", Range = {2, 50}, Increment = 1, CurrentValue = 2, Callback = function(V) HitboxSize = V end})
+CombatTab:CreateToggle({Name = "โหมดล่องหน", CurrentValue = false, Callback = function(V) 
+    Invisibility = V 
+    if Character then
+        for _, v in pairs(Character:GetDescendants()) do
+            if v:IsA("BasePart") or v:IsA("Decal") then v.Transparency = Invisibility and 1 or 0 end
+        end
+    end
+end})
+
+-- ### 2. ระบบ Movement ###
+MainTab:CreateSlider({Name = "ความเร็วการเดิน", Range = {16, 300}, Increment = 1, CurrentValue = 16, Callback = function(V) WalkSpeedValue = V end})
+MainTab:CreateSlider({Name = "แรงกระโดด", Range = {50, 300}, Increment = 1, CurrentValue = 50, Callback = function(V) JumpPowerValue = V end})
+MainTab:CreateToggle({Name = "หมุนตัว (Spin)", CurrentValue = false, Callback = function(V) SpinEnabled = V end})
+MainTab:CreateToggle({Name = "กระโดดไม่จำกัด", CurrentValue = false, Callback = function(V) InfJump = V end})
+
+-- ### 3. ระบบ ESP & วาร์ป ###
+VisualTab:CreateToggle({Name = "เปิด ESP", CurrentValue = false, Callback = function(V) ESPEnabled = V end})
+TP_Tab:CreateButton({Name = "รับคทาวาร์ป", Callback = function()
+    local Tool = Instance.new("Tool")
+    Tool.Name = "วาร์ป (กดที่พื้น)"
+    Tool.RequiresHandle = false
+    Tool.Parent = Player.Backpack
+    Tool.Activated:Connect(function()
+        Root.CFrame = CFrame.new(Player:GetMouse().Hit.Position + Vector3.new(0, 3, 0))
+    end)
+end})
+
+-- ### 4. Mini UI (ปุ่มด่วนด้านขวา) ###
+local MiniGui = Instance.new("ScreenGui", game.CoreGui)
+local PlusBtn = Instance.new("TextButton", MiniGui)
+PlusBtn.Size = UDim2.new(0, 60, 0, 60)
+PlusBtn.Position = UDim2.new(0.9, -10, 0.5, -30)
 PlusBtn.Text = "+"
 PlusBtn.BackgroundColor3 = Color3.new(1,0,0)
 Instance.new("UICorner", PlusBtn).CornerRadius = UDim.new(1,0)
-PlusBtn.MouseButton1Click:Connect(function() Rayfield:Toggle() end)
-spawn(function() local h = 0 while true do PlusBtn.BackgroundColor3 = Color3.fromHSV(h,1,1) h = h + 0.01 task.wait(0.05) end end)
+
+local MiniFrame = Instance.new("Frame", MiniGui)
+MiniFrame.Size = UDim2.new(0, 140, 0, 230) -- เพิ่มขนาดรองรับปุ่มใหม่
+MiniFrame.Position = UDim2.new(0.9, -160, 0.5, -115)
+MiniFrame.Visible = false
+MiniFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+Instance.new("UICorner", MiniFrame)
+local L = Instance.new("UIListLayout", MiniFrame); L.Padding = UDim.new(0,8); L.HorizontalAlignment = "Center"; L.VerticalAlignment = "Center"
+
+local function CreateMini(txt, cb)
+    local b = Instance.new("TextButton", MiniFrame)
+    b.Size = UDim2.new(0, 120, 0, 40); b.Text = txt; b.BackgroundColor3 = Color3.fromRGB(55,55,55); b.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", b); b.MouseButton1Click:Connect(cb)
+end
+
+CreateMini("เปิดเมนูหลัก", function() Rayfield:Toggle() end)
+CreateMini("ล็อคเป้า: ปิด", function(self) 
+    SilentAimEnabled = not SilentAimEnabled
+    b.Text = SilentAimEnabled and "ล็อคเป้า: เปิด" or "ล็อคเป้า: ปิด"
+end)
+CreateMini("พุ่ง (Dash)", function() if Root then Root.CFrame = Root.CFrame * CFrame.new(0,0,-DashSpeed/2) end end)
+CreateMini("ทะลุ (Noclip)", function() NoclipEnabled = not NoclipEnabled end)
+
+PlusBtn.MouseButton1Click:Connect(function() MiniFrame.Visible = not MiniFrame.Visible end)
+
+-- ### LOOP FUNCTIONS ###
+game:GetService("RunService").RenderStepped:Connect(function()
+    if Root and Humanoid then
+        if SpinEnabled then Root.CFrame = Root.CFrame * CFrame.Angles(0, math.rad(20), 0) end
+        if NoclipEnabled then for _, p in pairs(Character:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = false end end end
+        
+        -- ระบบ Silent Aim (หันหน้าไปหาฆาตกร)
+        if SilentAimEnabled then
+            local M_Part = GetMurderer()
+            if M_Part then
+                Root.CFrame = CFrame.new(Root.Position, Vector3.new(M_Part.Position.X, Root.Position.Y, M_Part.Position.Z))
+            end
+        end
+
+        Humanoid.WalkSpeed = WalkSpeedValue
+        Humanoid.JumpPower = JumpPowerValue
+    end
+end)
+
+-- Loop ESP & Hitbox (ประหยัดแรมมือถือ)
+spawn(function()
+    while task.wait(1.5) do
+        if ESPEnabled then
+            for _, p in pairs(game.Players:GetPlayers()) do
+                if p ~= Player and p.Character and not p.Character:FindFirstChild("Highlight") then
+                    Instance.new("Highlight", p.Character).FillTransparency = 0.5
+                end
+            end
+        end
+        if HitboxSize > 2 then
+            for _, v in pairs(game.Players:GetPlayers()) do
+                if v ~= Player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                    v.Character.HumanoidRootPart.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+                    v.Character.HumanoidRootPart.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+-- สายรุ้งปุ่มบวก
+spawn(function() local h = 0 while true do PlusBtn.BackgroundColor3 = Color3.fromHSV(h,0.8,1); h = h + 0.01; task.wait(0.05) end end)
+
+Rayfield:Notify({Title = "นางฟ้า Hub V.4", Content = "ระบบ Silent Aim พร้อมใช้งาน!", Duration = 3})
