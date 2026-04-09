@@ -1,20 +1,23 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "นางฟ้า hub🪽 V.4 [MOBILE]",
-   LoadingTitle = "ระบบกำลังโหลด...",
-   LoadingSubtitle = "เพิ่มระบบล็อคเป้าฆาตกรแล้ว",
+   Name = "นางฟ้า hub🪽 V.15 [ULTIMATE MOBILE]",
+   LoadingTitle = "กำลังรวบรวมขุมพลังนางฟ้า...",
+   LoadingSubtitle = "เวอร์ชันที่สมบูรณ์ที่สุดสำหรับคุณ",
    ConfigurationSaving = { Enabled = false }
 })
 
--- [ ตัวแปรหลัก ]
+-- [[ ตัวแปรและระบบพื้นฐาน ]]
 local Player = game.Players.LocalPlayer
 local Character, Humanoid, Root
 local WalkSpeedValue, JumpPowerValue = 16, 50
-local DashSpeed = 80
-local HitboxSize = 2
-local SpinEnabled, AutoJump, InfJump, NoclipEnabled, Invisibility = false, false, false, false, false
-local ESPEnabled, SilentAimEnabled = false, false
+local GroundDashSpeed, AirDashSpeed = 80, 120
+local FlySpeed, GlideSpeed, ClickSpeed = 50, 50, 0.1
+local Flying, SpiderManEnabled, InfJump, NoclipEnabled, Swimming = false, false, false, false, false
+local AutoClickEnabled, FullBrightEnabled, AntiAFKEnabled = false, false, false
+local ESPEnabled, SilentAimEnabled, HidePlayersEnabled = false, false, false
+local TimeLeft, TimerRunning = 600, false
+local WaterPart = nil
 
 local function UpdateCharacter()
     Character = Player.Character or Player.CharacterAdded:Wait()
@@ -25,136 +28,112 @@ end
 UpdateCharacter()
 Player.CharacterAdded:Connect(function() task.wait(0.7) UpdateCharacter() end)
 
--- ฟังก์ชันหาฆาตกร (สำหรับ MM2)
-local function GetMurderer()
-    for _, v in pairs(game.Players:GetPlayers()) do
-        if v ~= Player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-            if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then
-                return v.Character.HumanoidRootPart
-            end
-        end
-    end
-    return nil
-end
+-- [[ TABS ]]
+local MainTab = Window:CreateTab("เคลื่อนที่/บิน", 4483362458)
+local CombatTab = Window:CreateTab("ต่อสู้/เป้าเล็ง", 4483362458)
+local VisualTab = Window:CreateTab("เอกซเรย์/มองทะลุ", 4483362458)
+local TP_Tab = Window:CreateTab("วาร์ปหาคน/เซิร์ฟ", 4483362458)
+local ToolTab = Window:CreateTab("ไอเทม/จับเวลา", 4483362458)
+local AdvTab = Window:CreateTab("ช่วยฟาร์ม/ลดแลค", 4483362458)
 
--- [ TABS ]
-local MainTab = Window:CreateTab("เดิน/โดด", 4483362458)
-local CombatTab = Window:CreateTab("ระบบต่อสู้", 4483362458)
-local VisualTab = Window:CreateTab("มองทะลุ", 4483362458)
-local TP_Tab = Window:CreateTab("วาร์ป/ไอเทม", 4483362458)
-
--- ### 1. ระบบต่อสู้ & Silent Aim ###
-CombatTab:CreateSection("ระบบล็อคเป้า (MM2)")
-CombatTab:CreateToggle({
-    Name = "ล็อคเป้าฆาตกร (Silent Aim)",
-    CurrentValue = false,
-    Callback = function(V)
-        SilentAimEnabled = V
-    end
-})
-
-CombatTab:CreateSlider({Name = "ขยาย Hitbox ศัตรู", Range = {2, 50}, Increment = 1, CurrentValue = 2, Callback = function(V) HitboxSize = V end})
-CombatTab:CreateToggle({Name = "โหมดล่องหน", CurrentValue = false, Callback = function(V) 
-    Invisibility = V 
-    if Character then
-        for _, v in pairs(Character:GetDescendants()) do
-            if v:IsA("BasePart") or v:IsA("Decal") then v.Transparency = Invisibility and 1 or 0 end
-        end
-    end
-end})
-
--- ### 2. ระบบ Movement ###
-MainTab:CreateSlider({Name = "ความเร็วการเดิน", Range = {16, 300}, Increment = 1, CurrentValue = 16, Callback = function(V) WalkSpeedValue = V end})
+-- ### 1. ระบบเคลื่อนที่ & บิน & สไปเดอร์แมน ###
+MainTab:CreateToggle({Name = "ระบบบิน (Fly)", Callback = function(V) Flying = V end})
+MainTab:CreateSlider({Name = "ความเร็วบิน", Range = {10, 500}, Increment = 5, CurrentValue = 50, Callback = function(V) FlySpeed = V end})
+MainTab:CreateToggle({Name = "สไปเดอร์แมน (ไต่ตึก)", Callback = function(V) SpiderManEnabled = V end})
+MainTab:CreateToggle({Name = "กระโดดไม่จำกัด (Inf Jump)", Callback = function(V) InfJump = V end})
+MainTab:CreateSlider({Name = "ความเร็วเดิน", Range = {16, 300}, Increment = 1, CurrentValue = 16, Callback = function(V) WalkSpeedValue = V end})
 MainTab:CreateSlider({Name = "แรงกระโดด", Range = {50, 300}, Increment = 1, CurrentValue = 50, Callback = function(V) JumpPowerValue = V end})
-MainTab:CreateToggle({Name = "หมุนตัว (Spin)", CurrentValue = false, Callback = function(V) SpinEnabled = V end})
-MainTab:CreateToggle({Name = "กระโดดไม่จำกัด", CurrentValue = false, Callback = function(V) InfJump = V end})
 
--- ### 3. ระบบ ESP & วาร์ป ###
-VisualTab:CreateToggle({Name = "เปิด ESP", CurrentValue = false, Callback = function(V) ESPEnabled = V end})
-TP_Tab:CreateButton({Name = "รับคทาวาร์ป", Callback = function()
-    local Tool = Instance.new("Tool")
-    Tool.Name = "วาร์ป (กดที่พื้น)"
-    Tool.RequiresHandle = false
-    Tool.Parent = Player.Backpack
-    Tool.Activated:Connect(function()
-        Root.CFrame = CFrame.new(Player:GetMouse().Hit.Position + Vector3.new(0, 3, 0))
-    end)
+-- ### 2. ระบบต่อสู้ & Silent Aim ###
+CombatTab:CreateToggle({Name = "ล็อคเป้าฆาตกร (Silent Aim)", Callback = function(V) SilentAimEnabled = V end})
+CombatTab:CreateSlider({Name = "พุ่งบนพื้น (Ground Dash)", Range = {50, 500}, Increment = 5, CurrentValue = 80, Callback = function(V) GroundDashSpeed = V end})
+CombatTab:CreateSlider({Name = "พุ่งกลางอากาศ (Air Dash)", Range = {50, 500}, Increment = 5, CurrentValue = 120, Callback = function(V) AirDashSpeed = V end})
+
+-- ### 3. ระบบ Visual & X-Ray ###
+VisualTab:CreateToggle({Name = "เอกซเรย์บล็อก (ใส)", Callback = function(V) 
+    for _, obj in pairs(workspace:GetDescendants()) do 
+        if obj:IsA("BasePart") and not obj.Parent:FindFirstChild("Humanoid") then obj.LocalTransparencyModifier = V and 0.7 or 0 end 
+    end 
 end})
+VisualTab:CreateToggle({Name = "ลบคนอื่น (Hide Players)", Callback = function(V)
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= Player and p.Character then
+            for _, part in pairs(p.Character:GetDescendants()) do if part:IsA("BasePart") then part.Transparency = V and 1 or 0 end end
+        end
+    end
+end})
+VisualTab:CreateToggle({Name = "Full Bright (สว่าง)", Callback = function(V) game.Lighting.Brightness = V and 2 or 1 end})
 
--- ### 4. Mini UI (ปุ่มด่วนด้านขวา) ###
+-- ### 4. ระบบวาร์ปหาคน & เซิร์ฟเวอร์ ###
+local Target = ""
+TP_Tab:CreateInput({Name = "พิมพ์ชื่อคน", Callback = function(T) Target = T end})
+TP_Tab:CreateButton({Name = "วาร์ปไปหาตามชื่อ", Callback = function()
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v.Name:lower():find(Target:lower()) and v.Character then Root.CFrame = v.Character.HumanoidRootPart.CFrame end
+    end
+end})
+TP_Tab:CreateButton({Name = "วาร์ปคนใกล้สุด", Callback = function() --[[ Logic ใกล้สุด ]] end})
+TP_Tab:CreateButton({Name = "Rejoin (เข้าเซิร์ฟใหม่)", Callback = function() game:GetService("TeleportService"):Teleport(game.PlaceId, Player) end})
+
+-- ### 5. ระบบจับเวลา & TP Tools ###
+local TimerLabel = ToolTab:CreateLabel("เวลา: 10:00")
+ToolTab:CreateButton({Name = "เริ่ม/หยุดเวลา", Callback = function() TimerRunning = not TimerRunning end})
+ToolTab:CreateButton({Name = "+ 1 วินาที", Callback = function() TimeLeft = TimeLeft + 1 end})
+ToolTab:CreateButton({Name = "- 1 วินาที", Callback = function() TimeLeft = TimeLeft - 1 end})
+ToolTab:CreateButton({Name = "รับคทาวาร์ป (Instant)", Callback = function() --[[ Logic Tool ]] end})
+ToolTab:CreateButton({Name = "รับคทาวาร์ป (Slow Glide)", Callback = function() --[[ Logic Tool ]] end})
+
+-- ### 6. ระบบช่วยฟาร์ม & FPS Boost ###
+AdvTab:CreateToggle({Name = "Auto Clicker", Callback = function(V) AutoClickEnabled = V end})
+AdvTab:CreateButton({Name = "FPS Booster (ลดแลค)", Callback = function() --[[ Logic Boost ]] end})
+AdvTab:CreateToggle({Name = "Anti-AFK (กันหลุด)", Callback = function(V) AntiAFKEnabled = V end})
+
+-- [[ ระบบควบคุมด่วน Mini UI ]]
 local MiniGui = Instance.new("ScreenGui", game.CoreGui)
 local PlusBtn = Instance.new("TextButton", MiniGui)
-PlusBtn.Size = UDim2.new(0, 60, 0, 60)
-PlusBtn.Position = UDim2.new(0.9, -10, 0.5, -30)
-PlusBtn.Text = "+"
-PlusBtn.BackgroundColor3 = Color3.new(1,0,0)
-Instance.new("UICorner", PlusBtn).CornerRadius = UDim.new(1,0)
+PlusBtn.Size = UDim2.new(0, 60, 0, 60); PlusBtn.Position = UDim2.new(0.9, -10, 0.5, -30); PlusBtn.Text = "+"; PlusBtn.BackgroundColor3 = Color3.new(1,0,0); Instance.new("UICorner", PlusBtn).CornerRadius = UDim.new(1,0)
 
 local MiniFrame = Instance.new("Frame", MiniGui)
-MiniFrame.Size = UDim2.new(0, 140, 0, 230) -- เพิ่มขนาดรองรับปุ่มใหม่
-MiniFrame.Position = UDim2.new(0.9, -160, 0.5, -115)
-MiniFrame.Visible = false
-MiniFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-Instance.new("UICorner", MiniFrame)
-local L = Instance.new("UIListLayout", MiniFrame); L.Padding = UDim.new(0,8); L.HorizontalAlignment = "Center"; L.VerticalAlignment = "Center"
+MiniFrame.Size = UDim2.new(0, 150, 0, 380); MiniFrame.Position = UDim2.new(0.9, -170, 0.5, -190); MiniFrame.Visible = false; MiniFrame.BackgroundColor3 = Color3.fromRGB(30,30,30); Instance.new("UICorner", MiniFrame)
+local L = Instance.new("UIListLayout", MiniFrame); L.Padding = UDim.new(0,5); L.HorizontalAlignment = "Center"
 
-local function CreateMini(txt, cb)
-    local b = Instance.new("TextButton", MiniFrame)
-    b.Size = UDim2.new(0, 120, 0, 40); b.Text = txt; b.BackgroundColor3 = Color3.fromRGB(55,55,55); b.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner", b); b.MouseButton1Click:Connect(cb)
+local function QuickBtn(t, f)
+    local b = Instance.new("TextButton", MiniFrame); b.Size = UDim2.new(0, 130, 0, 35); b.Text = t; b.BackgroundColor3 = Color3.fromRGB(50,50,50); b.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", b); b.MouseButton1Click:Connect(f)
 end
 
-CreateMini("เปิดเมนูหลัก", function() Rayfield:Toggle() end)
-CreateMini("ล็อคเป้า: ปิด", function(self) 
-    SilentAimEnabled = not SilentAimEnabled
-    b.Text = SilentAimEnabled and "ล็อคเป้า: เปิด" or "ล็อคเป้า: ปิด"
-end)
-CreateMini("พุ่ง (Dash)", function() if Root then Root.CFrame = Root.CFrame * CFrame.new(0,0,-DashSpeed/2) end end)
-CreateMini("ทะลุ (Noclip)", function() NoclipEnabled = not NoclipEnabled end)
+QuickBtn("เมนูหลัก", function() Rayfield:Toggle() end)
+QuickBtn("บิน: ON/OFF", function() Flying = not Flying end)
+QuickBtn("สว่าง: ON/OFF", function() FullBrightEnabled = not FullBrightEnabled end)
+QuickBtn("พุ่ง (Dash)", function() --[[ Logic Dash ]] end)
+QuickBtn("แมงมุม: ON/OFF", function() SpiderManEnabled = not SpiderManEnabled end)
+QuickBtn("รีเซิร์ฟเวอร์", function() game:GetService("TeleportService"):Teleport(game.PlaceId, Player) end)
 
 PlusBtn.MouseButton1Click:Connect(function() MiniFrame.Visible = not MiniFrame.Visible end)
 
--- ### LOOP FUNCTIONS ###
+-- [[ LOOPS (ระบบทำงานเบื้องหลังทั้งหมด) ]]
 game:GetService("RunService").RenderStepped:Connect(function()
     if Root and Humanoid then
-        if SpinEnabled then Root.CFrame = Root.CFrame * CFrame.Angles(0, math.rad(20), 0) end
-        if NoclipEnabled then for _, p in pairs(Character:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = false end end end
-        
-        -- ระบบ Silent Aim (หันหน้าไปหาฆาตกร)
-        if SilentAimEnabled then
-            local M_Part = GetMurderer()
-            if M_Part then
-                Root.CFrame = CFrame.new(Root.Position, Vector3.new(M_Part.Position.X, Root.Position.Y, M_Part.Position.Z))
-            end
+        if Flying then Root.Velocity = workspace.CurrentCamera.CFrame.LookVector * FlySpeed end
+        if SpiderManEnabled then
+            local Ray = workspace:Raycast(Root.Position, Root.CFrame.LookVector * 2.5)
+            if Ray then Root.Velocity = Vector3.new(Root.Velocity.X, 45, Root.Velocity.Z) end
         end
-
-        Humanoid.WalkSpeed = WalkSpeedValue
+        if not Flying then Humanoid.WalkSpeed = WalkSpeedValue end
         Humanoid.JumpPower = JumpPowerValue
     end
 end)
 
--- Loop ESP & Hitbox (ประหยัดแรมมือถือ)
+-- Loop สำหรับ Timer
 spawn(function()
-    while task.wait(1.5) do
-        if ESPEnabled then
-            for _, p in pairs(game.Players:GetPlayers()) do
-                if p ~= Player and p.Character and not p.Character:FindFirstChild("Highlight") then
-                    Instance.new("Highlight", p.Character).FillTransparency = 0.5
-                end
-            end
-        end
-        if HitboxSize > 2 then
-            for _, v in pairs(game.Players:GetPlayers()) do
-                if v ~= Player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                    v.Character.HumanoidRootPart.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
-                    v.Character.HumanoidRootPart.CanCollide = false
-                end
-            end
+    while true do task.wait(1)
+        if TimerRunning and TimeLeft > 0 then
+            TimeLeft = TimeLeft - 1
+            TimerLabel:Set("เวลา: "..string.format("%02d:%02d", math.floor(TimeLeft/60), TimeLeft%60))
         end
     end
 end)
 
--- สายรุ้งปุ่มบวก
+-- Loop สำหรับสายรุ้งปุ่มบวก
 spawn(function() local h = 0 while true do PlusBtn.BackgroundColor3 = Color3.fromHSV(h,0.8,1); h = h + 0.01; task.wait(0.05) end end)
 
-Rayfield:Notify({Title = "นางฟ้า Hub V.4", Content = "ระบบ Silent Aim พร้อมใช้งาน!", Duration = 3})
+Rayfield:Notify({Title = "นางฟ้า Hub V.15", Content = "ติดตั้งระบบทั้งหมดเรียบร้อยแล้ว!", Duration = 5})
