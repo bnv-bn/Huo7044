@@ -1,0 +1,153 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- สร้างหน้าต่างหลัก (Pentagon Style & Rainbow Theme)
+local Window = Rayfield:CreateWindow({
+   Name = "🌈 Rainbow Pentagon Menu",
+   LoadingTitle = "Loading System...",
+   LoadingSubtitle = "MMV",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "PentagonConfig",
+      FileName = "UserSetting"
+   },
+   KeySystem = false -- ปิดระบบ Key เพื่อความสะดวก
+})
+
+-- ตัวแปรตั้งค่าพื้นฐาน
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+
+local DashSpeed = 50
+local SpiderEnabled = false
+
+-- ### 1. ระบบกระโดดแล้วพุ่ง (Dash System)
+local MainTab = Window:CreateTab("Main Hacks", 4483362458) -- ไอคอน
+
+MainTab:CreateInput({
+   Name = "Dash Speed (ความเร็วพุ่ง)",
+   PlaceholderText = "ใส่ตัวเลขความเร็ว...",
+   RemoveTextAfterFocusLost = false,
+   Callback = function(Text)
+      DashSpeed = tonumber(Text) or 50
+   end,
+})
+
+UserInputService.JumpRequest:Connect(function()
+    if Humanoid:GetState() ~= Enum.HumanoidStateType.Jumping then
+        local Root = Character:FindFirstChild("HumanoidRootPart")
+        if Root then
+            Root.Velocity = Root.CFrame.LookVector * DashSpeed + Vector3.new(0, 20, 0)
+        end
+    end
+end)
+
+-- ### 2. ระบบสไปเดอร์แมน (Spider-Man)
+MainTab:CreateToggle({
+   Name = "Spider-Man (ไต่กำแพง)",
+   CurrentValue = false,
+   Flag = "SpiderFlag",
+   Callback = function(Value)
+      SpiderEnabled = Value
+   end,
+})
+
+RunService.RenderStepped:Connect(function()
+    if SpiderEnabled then
+        local Root = Character:FindFirstChild("HumanoidRootPart")
+        local Start = Root.Position
+        local Direction = Root.CFrame.LookVector * 2
+        
+        local RaycastParams = RaycastParams.new()
+        RaycastParams.FilterDescendantsInstances = {Character}
+        RaycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+        local Result = workspace:Raycast(Start, Direction, RaycastParams)
+        if Result then
+            Root.Velocity = Vector3.new(Root.Velocity.X, 30, Root.Velocity.Z)
+        end
+    end
+end)
+
+-- ### 3. ระบบปรับความเร็ว/กระโดด (Stats)
+local StatsTab = Window:CreateTab("Movement", 4483362458)
+
+StatsTab:CreateSlider({
+   Name = "WalkSpeed (ความเร็วเดิน)",
+   Range = {16, 500},
+   Increment = 1,
+   Suffix = "Speed",
+   CurrentValue = 16,
+   Flag = "WS",
+   Callback = function(Value)
+      Humanoid.WalkSpeed = Value
+   end,
+})
+
+StatsTab:CreateSlider({
+   Name = "JumpPower (แรงกระโดด)",
+   Range = {50, 500},
+   Increment = 1,
+   Suffix = "Power",
+   CurrentValue = 50,
+   Flag = "JP",
+   Callback = function(Value)
+      Humanoid.JumpPower = Value
+   end,
+})
+
+-- ### 4. ระบบแยกปุ่ม (Quick Button)
+-- สร้างปุ่มกลมๆ ฝั่งขวา เพื่อแยกการใช้งานให้สะดวก
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local MainButton = Instance.new("TextButton", ScreenGui)
+local DashButton = Instance.new("TextButton", ScreenGui)
+
+MainButton.Name = "PlusButton"
+MainButton.Size = UDim2.new(0, 50, 0, 50)
+MainButton.Position = UDim2.new(0.9, 0, 0.5, 0)
+MainButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+MainButton.Text = "+"
+MainButton.TextColor3 = Color3.new(1,1,1)
+MainButton.TextSize = 30
+MainButton.ClipsDescendants = true
+
+local Corner = Instance.new("UICorner", MainButton)
+Corner.CornerRadius = UDim.new(1, 0)
+
+-- ปุ่มแยก (Dash Button)
+DashButton.Name = "QuickDash"
+DashButton.Size = UDim2.new(0, 100, 0, 40)
+DashButton.Position = UDim2.new(0.82, 0, 0.5, 5)
+DashButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+DashButton.Text = "Dash Ready"
+DashButton.Visible = false
+Instance.new("UICorner", DashButton)
+
+MainButton.MouseButton1Click:Connect(function()
+    DashButton.Visible = not DashButton.Visible
+    -- ใส่ Effect รุ้งให้ปุ่ม
+    spawn(function()
+        while DashButton.Visible do
+            for i = 0, 1, 0.01 do
+                MainButton.BackgroundColor3 = Color3.fromHSV(i, 1, 1)
+                task.wait(0.01)
+            end
+        end
+    end)
+end)
+
+DashButton.MouseButton1Click:Connect(function()
+    local Root = Character:FindFirstChild("HumanoidRootPart")
+    if Root then
+        Root.Velocity = Root.CFrame.LookVector * DashSpeed * 2
+    end
+end)
+
+Rayfield:Notify({
+   Title = "Script Loaded",
+   Content = "เมนูสายรุ้งพร้อมใช้งานแล้ว!",
+   Duration = 5,
+   Image = 4483362458,
+})
