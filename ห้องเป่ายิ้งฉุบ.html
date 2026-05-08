@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เป่ายิงฉุบ Betting System</title>
+    <style>
+        body { font-family: 'Kanit', sans-serif; text-align: center; background-color: #1a1a2e; color: white; padding: 50px; }
+        .container { background: #16213e; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: inline-block; min-width: 320px; }
+        input { padding: 10px; border-radius: 5px; border: none; margin-bottom: 20px; width: 80%; text-align: center; font-size: 16px; }
+        .choices { margin-top: 10px; }
+        button.choice-btn { font-size: 45px; margin: 10px; cursor: pointer; border: none; background: rgba(255,255,255,0.1); border-radius: 15px; padding: 10px; transition: 0.3s; }
+        button.choice-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-5px); }
+        #result { margin-top: 25px; font-size: 22px; font-weight: bold; min-height: 60px; }
+        .highlight { color: #e94560; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🎮 เป่ายิงฉุบเดิมพัน</h2>
+    
+    <input type="text" id="playerName" placeholder="กรอกชื่อผู้เดิมพัน..." maxlength="20">
+    
+    <div class="choices">
+        <button class="choice-btn" onclick="playGame('✌️', 'กรรไกร')">✌️</button>
+        <button class="choice-btn" onclick="playGame('✋', 'กระดาษ')">✋</button>
+        <button class="choice-btn" onclick="playGame('✊', 'ค้อน')">✊</button>
+    </div>
+
+    <div id="result">กรุณาใส่ชื่อแล้วเลือกอาวุธ!</div>
+</div>
+
+<script>
+    const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1496418597960945745/gK0im7IcCPE4NnPmxofCuRxpkxzZX_C49x0jogPJaGoorjay8sSCe5rUx7xD9rLQv0t3';
+
+    function playGame(userEmoji, userChoice) {
+        const nameInput = document.getElementById('playerName').value.trim();
+        const playerName = nameInput || "ผู้เล่นนิรนาม"; // ถ้าไม่ใส่ชื่อจะใช้ชื่อนี้แทน
+
+        const choices = ['กรรไกร', 'กระดาษ', 'ค้อน'];
+        const emojis = {'กรรไกร': '✌️', 'กระดาษ': '✋', 'ค้อน': '✊'};
+        const botChoice = choices[Math.floor(Math.random() * 3)];
+        const botEmoji = emojis[botChoice];
+        
+        let status = "";
+        let color = 16777215; // สีขาวพื้นฐาน
+
+        if (userChoice === botChoice) {
+            status = "เสมอ! 🤝";
+            color = 16776960; // สีเหลือง
+        } else if (
+            (userChoice === 'กรรไกร' && botChoice === 'กระดาษ') ||
+            (userChoice === 'กระดาษ' && botChoice === 'ค้อน') ||
+            (userChoice === 'ค้อน' && botChoice === 'กรรไกร')
+        ) {
+            status = "คุณชนะ! 🎉";
+            color = 5763719; // สีเขียว
+        } else {
+            status = "คุณแพ้! 💀";
+            color = 15548997; // สีแดง
+        }
+
+        // แสดงผลหน้าเว็บ
+        document.getElementById('result').innerHTML = `
+            <span style="font-size: 16px; color: #aaa;">ผู้เล่น: ${playerName}</span><br>
+            ${userEmoji} vs ${botEmoji}<br>
+            <span class="highlight">${status}</span>
+        `;
+
+        // ส่งข้อมูลไป Discord
+        sendToDiscord(playerName, userEmoji, botEmoji, status, color);
+    }
+
+    function sendToDiscord(name, user, bot, status, color) {
+        const data = {
+            embeds: [{
+                title: "บทสรุปการเป่ายิ้งฉุบ🔥",
+                color: color,
+                fields: [
+                    { name: "👤 ชื่อผู้เล่น", value: `**${name}**`, inline: false },
+                    { name: "เลือก", value: user, inline: true },
+                    { name: "บอทเลือก", value: bot, inline: true },
+                    { name: "ผลลัพธ์", value: `> **${status}**`, inline: false }
+                ],
+                footer: { text: "ระบบเป่ายิงฉุบอัตโนมัติ" },
+                timestamp: new Date()
+            }]
+        };
+
+        fetch(DISCORD_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).catch(err => console.error("Error:", err));
+    }
+</script>
+
+</body>
+</html>
+
