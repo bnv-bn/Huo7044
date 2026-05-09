@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Spammer - Pro</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;500&display=swap');
+        * { box-sizing: border-box; font-family: 'Kanit', sans-serif; }
+        body { background: #0b0e14; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: #1a1c23; padding: 25px; border-radius: 20px; width: 95%; max-width: 400px; border: 2px solid #e94560; box-shadow: 0 10px 30px rgba(233, 69, 96, 0.2); }
+        h2 { text-align: center; color: #e94560; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 14px; color: #94a3b8; margin-bottom: 5px; }
+        input, textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; outline: none; transition: 0.3s; }
+        input:focus { border-color: #e94560; }
+
+        .btn-send { width: 100%; background: #e94560; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-send:hover { background: #ff5e78; transform: translateY(-2px); }
+        .btn-send:disabled { background: #444; cursor: not-allowed; }
+
+        #log { margin-top: 20px; background: #000; padding: 10px; border-radius: 8px; font-size: 12px; height: 100px; overflow-y: auto; color: #00ff00; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🔥 Webhook Sender</h2>
+    
+    <div class="input-group">
+        <label>💬 ข้อความที่ต้องการส่ง</label>
+        <textarea id="msg" rows="3" placeholder="เช่น สวัสดีครับพี่น้อง..."></textarea>
+    </div>
+
+    <div class="input-group">
+        <label>🔢 จำนวน (รอบ)</label>
+        <input type="number" id="amt" value="10">
+    </div>
+
+    <div class="input-group">
+        <label>⏱️ ความหน่วง (มิลลิวินาที: 1000 = 1 วินาที)</label>
+        <input type="number" id="delay" value="1000">
+        <small style="color:#666;">*แนะนำ 1000 ขึ้นไปเพื่อไม่ให้โดนแบน</small>
+    </div>
+
+    <button class="btn-send" id="runBtn" onclick="fire()">🚀 เริ่มทำงาน</button>
+
+    <div id="log">สถานะ: พร้อมใช้งาน...</div>
+</div>
+
+<script>
+    // เชื่อมต่อลิงก์ Webhook ของพี่ชายให้แล้วครับ
+    const MY_WEBHOOK = "★★★";
+
+    async function fire() {
+        const msg = document.getElementById('msg').value;
+        const amt = parseInt(document.getElementById('amt').value);
+        const delay = parseInt(document.getElementById('delay').value);
+        const btn = document.getElementById('runBtn');
+        const log = document.getElementById('log');
+
+        if (!msg) return alert("พิมพ์ข้อความก่อนพี่ชาย!");
+
+        btn.disabled = true;
+        log.innerHTML = "🏁 เริ่มการส่งข้อความ...<br>";
+
+        for (let i = 1; i <= amt; i++) {
+            try {
+                const response = await fetch(MY_WEBHOOK, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: msg })
+                });
+
+                if (response.ok) {
+                    log.innerHTML += `✅ ส่งสำเร็จ [${i}/${amt}]<br>`;
+                } else if (response.status === 429) {
+                    log.innerHTML += `⚠️ ติด Rate Limit! (ช้าลงหน่อยนะ)<br>`;
+                } else {
+                    log.innerHTML += `❌ ข้อผิดพลาด: ${response.status}<br>`;
+                }
+            } catch (e) {
+                log.innerHTML += `❌ เชื่อมต่อล้มเหลว<br>`;
+            }
+            
+            // เลื่อน Log ลงล่างสุด
+            log.scrollTop = log.scrollHeight;
+            
+            // รอเวลา
+            await new Promise(r => setTimeout(r, delay));
+        }
+
+        log.innerHTML += "✨ เสร็จสิ้นภารกิจ!<br>";
+        btn.disabled = false;
+    }
+</script>
+
+</body>
+  </html>
+
